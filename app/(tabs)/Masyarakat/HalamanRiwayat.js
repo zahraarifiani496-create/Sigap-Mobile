@@ -1,155 +1,202 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
+  SafeAreaView,
+  ScrollView,
   TouchableOpacity,
-  StatusBar,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
-const dataRiwayat = [
-  { id: 'z10Fa', judul: 'Jalan Berlubang', lokasi: 'Jln.Tubun RW 16 RT8', status: 'Diproses' },
-  { id: '55tKL', judul: 'Drainase tersumbat', lokasi: 'Jln.Cibogo RW7 RT1', status: 'Diproses' },
-  { id: 'g27Ht', judul: 'Jembatan Retak', lokasi: 'Jln.Paskal RW 36 RT23', status: 'Selesai' },
-  { id: '123sgT', judul: 'Drainase tersumbat', lokasi: 'Jln.Rawa Badak RW 17 RT9', status: 'Selesai' },
-];
+const HalamanRiwayat = ({ navigation }) => {
+  const [reports, setReports] = useState([
+    {
+      id: 'z10Fa',
+      title: 'Jalan Berlubang',
+      address: 'Jin Tuhur RW 16 RT8',
+      status: 'Diproses',
+      statusColor: '#FF9800',
+    },
+    {
+      id: '55IKL',
+      title: 'Drainase tersumbat',
+      address: 'Jin.Cibogo RW7 RT1',
+      status: 'Diproses',
+      statusColor: '#FF9800',
+    },
+    {
+      id: 'p27Hf',
+      title: 'Jembatan Retak',
+      address: 'Jin Praja RW 8 RT 23',
+      status: 'Selesai',
+      statusColor: '#4CAF50',
+    },
+    {
+      id: '1239gT',
+      title: 'Drainase tersumbat',
+      address: 'Jin.Rawa Badak RW 17 RT9',
+      status: 'Selesai',
+      statusColor: '#4CAF50',
+    },
+  ]);
 
-export default function HalamanRiwayat() {
-  const router = useRouter();
+  const renderReportCard = (report) => (
+    <TouchableOpacity
+      key={report.id}
+      style={[styles.reportCard, { borderLeftColor: report.statusColor }]}
+      onPress={() => navigation.navigate('HalamanDetailRiwayat', { report })}
+      activeOpacity={0.7}
+    >
+      <View style={styles.reportHeader}>
+        <Text style={styles.reportId}>ID : {report.id}</Text>
+      </View>
 
-  const renderItem = ({ item }) => {
-    const isSelesai = item.status === 'Selesai';
+      <Text style={styles.reportTitle}>{report.title}</Text>
+      <Text style={styles.reportAddress}>{report.address}</Text>
 
-    return (
-      <TouchableOpacity
-        style={[
-          styles.card,
-          { backgroundColor: isSelesai ? '#B7E1A1' : '#E6CF8B' }
-        ]}
-        onPress={() =>
-          router.push({
-            pathname: '/(tabs)/Masyarakat/HalamanDetailRiwayat',
-            params: { data: JSON.stringify(item) },
-          })
-        }
-      >
-        <Text style={styles.id}>ID : {item.id}</Text>
-
-        <Text style={styles.judul}>{item.judul}</Text>
-        <Text style={styles.lokasi}>{item.lokasi}</Text>
-
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusLabel}>Status : </Text>
-          <View
-            style={[
-              styles.badge,
-              { backgroundColor: isSelesai ? '#3CE000' : '#F2B705' }
-            ]}
-          >
-            <Text style={styles.statusText}>{item.status}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+      <View style={styles.statusContainer}>
+        <Text style={[styles.statusText, { color: report.statusColor }]}>
+          Status : {report.status}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-
-      {/* HEADER */}
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.push('/(tabs)/Masyarakat/HalamanTerkirim')}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-
         <Text style={styles.headerTitle}>Riwayat Laporan Saya</Text>
       </View>
 
-      {/* LIST */}
-      <FlatList
-        data={dataRiwayat}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 15 }}
-      />
-    </View>
-  );
-}
+      {/* Reports List */}
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.reportsList}>
+          {reports.map((report) => renderReportCard(report))}
+        </View>
+      </ScrollView>
 
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanBeranda')}>
+          <Ionicons name="home-outline" size={24} color="#999" />
+          <Text style={styles.navLabel}>Beranda</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.navItem, styles.active]}>
+          <Ionicons name="list-outline" size={24} color="#2C3E50" />
+          <Text style={[styles.navLabel, styles.activeLabel]}>Laporan</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanRiwayat')}>
+          <Ionicons name="time-outline" size={24} color="#999" />
+          <Text style={styles.navLabel}>Riwayat</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanBantuan')}>
+          <Ionicons name="help-circle-outline" size={24} color="#999" />
+          <Text style={styles.navLabel}>Bantuan</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanProfil')}>
+          <Ionicons name="person-outline" size={24} color="#999" />
+          <Text style={styles.navLabel}>Profil</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: '#F5F5F5',
   },
-
   header: {
-    backgroundColor: '#3E4A72',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingTop: 50,
-    paddingBottom: 15,
+    backgroundColor: '#2C3E50',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
   },
-
   headerTitle: {
-    color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 15,
+    fontWeight: '700',
+    color: '#fff',
   },
-
-  card: {
-    borderRadius: 12,
+  scrollContainer: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingTop: 15,
+  },
+  reportsList: {
+    marginBottom: 20,
+  },
+  reportCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
     padding: 15,
-    marginBottom: 15,
-    elevation: 3,
+    marginBottom: 12,
+    borderLeftWidth: 5,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-
-  id: {
+  reportHeader: {
+    marginBottom: 8,
+  },
+  reportId: {
     fontSize: 12,
-    color: '#333',
-    marginBottom: 5,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: '#FFD700',
   },
-
-  judul: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#3A2F0B',
-  },
-
-  lokasi: {
+  reportTitle: {
     fontSize: 14,
-    marginTop: 3,
-    color: '#3A2F0B',
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 4,
   },
-
+  reportAddress: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 10,
+  },
   statusContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
   },
-
-  statusLabel: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-
   statusText: {
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    paddingVertical: 8,
+  },
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  active: {
+    borderBottomWidth: 3,
+    borderBottomColor: '#2C3E50',
+  },
+  navLabel: {
+    fontSize: 10,
+    color: '#999',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  activeLabel: {
+    color: '#2C3E50',
+    fontWeight: '700',
   },
 });
+
+export default HalamanRiwayat;

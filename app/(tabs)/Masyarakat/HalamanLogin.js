@@ -12,33 +12,22 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const HalamanRegister = ({ navigation }) => {
-  const [fullName, setFullName] = useState('');
+const HalamanLogin = ({ navigation }) => {
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleRegister = () => {
-    if (!fullName || !email || !phone || !password || !confirmPassword) {
+  const handleLogin = () => {
+    if (!email || !password) {
       Alert.alert('Error', 'Silahkan isi semua field');
       return;
     }
+    Alert.alert('Success', 'Login berhasil!');
+    navigation.navigate('HalamanBeranda');
+  };
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Kata sandi tidak cocok');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Error', 'Kata sandi minimal 6 karakter');
-      return;
-    }
-
-    Alert.alert('Success', 'Registrasi berhasil! Silahkan login');
-    navigation.navigate('HalamanLogin');
+  const handleForgotPassword = () => {
+    navigation.navigate('HalamanLupaSandi');
   };
 
   return (
@@ -46,7 +35,7 @@ const HalamanRegister = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerText}>Register</Text>
+          <Text style={styles.headerText}>Login</Text>
         </View>
 
         {/* Logo - PATH DIPERBAIKI */}
@@ -61,24 +50,12 @@ const HalamanRegister = ({ navigation }) => {
 
         {/* Welcome Message */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Daftar Akun Baru</Text>
-          <Text style={styles.welcomeSubtitle}>Silahkan isi untuk melanjutkan</Text>
+          <Text style={styles.welcomeTitle}>Selamat Datang!</Text>
+          <Text style={styles.welcomeSubtitle}>Silahkan masuk untuk melanjutkan</Text>
         </View>
 
         {/* Form */}
         <View style={styles.form}>
-          {/* Full Name Input */}
-          <View style={styles.inputWrapper}>
-            <Ionicons name="person-outline" size={20} color="#999" />
-            <TextInput
-              style={styles.input}
-              placeholder="Nama Pengguna"
-              placeholderTextColor="#999"
-              value={fullName}
-              onChangeText={setFullName}
-            />
-          </View>
-
           {/* Email Input */}
           <View style={styles.inputWrapper}>
             <Ionicons name="mail-outline" size={20} color="#999" />
@@ -89,19 +66,6 @@ const HalamanRegister = ({ navigation }) => {
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-            />
-          </View>
-
-          {/* Phone Input */}
-          <View style={styles.inputWrapper}>
-            <Ionicons name="call-outline" size={20} color="#999" />
-            <TextInput
-              style={styles.input}
-              placeholder="Nomor WhatsApp"
-              placeholderTextColor="#999"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
             />
           </View>
 
@@ -117,7 +81,7 @@ const HalamanRegister = ({ navigation }) => {
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons
+              <Iconicons
                 name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                 size={20}
                 color="#999"
@@ -125,40 +89,25 @@ const HalamanRegister = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Confirm Password Input */}
-          <View style={styles.inputWrapper}>
-            <Ionicons name="lock-closed-outline" size={20} color="#999" />
-            <TextInput
-              style={styles.input}
-              placeholder="Konfirmasi Kata Sandi"
-              placeholderTextColor="#999"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showConfirmPassword}
-            />
-            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-              <Ionicons
-                name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
-                size={20}
-                color="#999"
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Register Button */}
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={handleRegister}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.registerButtonText}>Daftar</Text>
+          {/* Forgot Password Link */}
+          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPassword}>
+            <Text style={styles.forgotPasswordText}>Lupa Kata Sandi?</Text>
           </TouchableOpacity>
 
-          {/* Login Link */}
-          <View style={styles.loginSection}>
-            <Text style={styles.loginText}>Sudah punya akun? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('HalamanLogin')}>
-              <Text style={styles.loginLink}>Masuk Sekarang</Text>
+          {/* Login Button */}
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.loginButtonText}>Masuk</Text>
+          </TouchableOpacity>
+
+          {/* Register Link */}
+          <View style={styles.registerSection}>
+            <Text style={styles.registerText}>Belum punya akun? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('HalamanRegister')}>
+              <Text style={styles.registerLink}>Daftar Sekarang</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -177,7 +126,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   header: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   headerText: {
     fontSize: 24,
@@ -186,7 +135,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   logo: {
     width: 100,
@@ -222,7 +171,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 12,
+    marginBottom: 15,
     height: 50,
     backgroundColor: '#F9F9F9',
   },
@@ -232,33 +181,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
   },
-  registerButton: {
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    fontSize: 12,
+    color: '#0066CC',
+    fontWeight: '600',
+  },
+  loginButton: {
     backgroundColor: '#FFD700',
     borderRadius: 8,
     paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 10,
     marginBottom: 15,
   },
-  registerButtonText: {
+  loginButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
   },
-  loginSection: {
+  registerSection: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loginText: {
+  registerText: {
     fontSize: 13,
     color: '#999',
   },
-  loginLink: {
+  registerLink: {
     fontSize: 13,
     color: '#0066CC',
     fontWeight: '700',
   },
 });
 
-export default HalamanRegister;
+export default HalamanLogin;

@@ -1,238 +1,348 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, Image,
-  ScrollView, TouchableOpacity, StatusBar
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function HalamanDetailRiwayat() {
-  const router = useRouter();
-  const params = useLocalSearchParams();
+const HalamanDetailRiwayat = ({ navigation, route }) => {
+  const { report } = route.params || {};
 
-  const dataLaporan = params.dataLaporan
-    ? JSON.parse(params.dataLaporan)
-    : null;
-
-  const isSelesai = dataLaporan?.status === "Selesai";
+  const reportDetails = {
+    idLaporan: 'AM1223B8Ju',
+    status: 'Selesai',
+    jenisLaporan: report?.title || 'Jalan Retak',
+    lokasi: report?.address || 'Jin.Praja RW36 RT23',
+    fotoLaporan: [
+      require('../../../assets/images/news.jpg'),
+      require('../../../assets/images/orang.png'),
+    ],
+    deskripsi: 'Jalan mengalami kerusakan parah pada bagian bahu jalan terutama pada sisi sebelah timur. Kondisi ini sangat berbahaya bagi pengendara motor maupun mobil.',
+    informasiLaporan: {
+      tanggalLaporan: '27 Oktober 2026',
+      perkiraaanSelesai: '10 Mei 2025',
+      tanggalSelesai: '01 Mei 2025',
+      durasiPengerjaan: '7 hari',
+      statusBoleh: 'Boleh Penerangkan',
+    },
+    riwayatProgres: [
+      { tanggal: '27 Oktober 2026, 14:30', status: 'Laporan diterima oleh admin' },
+      { tanggal: '10 Mei 2025, 08:00', status: 'Laporan diverifikasi' },
+      { tanggal: '15 Mei 2025, 09:30', status: 'Pekerjaan dimulai' },
+      { tanggal: '01 Mei 2025, 16:30', status: 'Selesai' },
+    ],
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-
-      {/* HEADER (SUDAH DIPERKECIL) */}
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="white" />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail Riwayat Laporan</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Info Card */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>ID Laporan</Text>
+            <Text style={styles.infoValue}>{reportDetails.idLaporan}</Text>
+          </View>
+          <View style={styles.divider} />
 
-        {/* CARD UTAMA */}
-        <View style={styles.cardUtama}>
-          <View style={styles.rowBetween}>
-            <View>
-              <Text style={styles.label}>ID Laporan</Text>
-              <Text style={styles.value}>{dataLaporan?.id}</Text>
-            </View>
-
-            <View style={{ alignItems: 'center' }}>
-              <Text style={styles.label}>Status</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons
-                  name={isSelesai ? "checkmark-circle" : "time"}
-                  size={18}
-                  color={isSelesai ? "green" : "orange"}
-                />
-                <Text style={{ marginLeft: 5, fontWeight: 'bold' }}>
-                  {dataLaporan?.status}
-                </Text>
-              </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Status</Text>
+            <View style={[styles.statusBadge, { backgroundColor: '#4CAF50' }]}>
+              <Ionicons name="checkmark-circle" size={16} color="#fff" />
+              <Text style={styles.statusBadgeText}>{reportDetails.status}</Text>
             </View>
           </View>
+          <View style={styles.divider} />
 
-          <Text style={styles.label}>Jenis Laporan</Text>
-          <Text style={styles.judul}>{dataLaporan?.judul}</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Jenis Laporan</Text>
+            <Text style={styles.infoValue}>{reportDetails.jenisLaporan}</Text>
+          </View>
+          <View style={styles.divider} />
 
-          <Text style={styles.label}>Lokasi</Text>
-          <Text style={styles.value}>{dataLaporan?.lokasi}</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Lokasi</Text>
+            <Text style={styles.infoValue}>{reportDetails.lokasi}</Text>
+          </View>
         </View>
 
-        {/* FOTO */}
-        <Text style={styles.sectionTitle}>Foto Laporan</Text>
-        <Image
-          source={{
-            uri: dataLaporan?.image || 'https://picsum.photos/400'
-          }}
-          style={styles.bigImg}
-        />
+        {/* Foto Laporan */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Foto Laporan</Text>
+          <View style={styles.photoGrid}>
+            {reportDetails.fotoLaporan.map((foto, index) => (
+              <Image key={index} source={foto} style={styles.photoItem} />
+            ))}
+          </View>
+        </View>
 
-        {/* DESKRIPSI */}
-        <View style={styles.card}>
+        {/* Deskripsi */}
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Deskripsi Laporan</Text>
-          <Text>{dataLaporan?.deskripsi || "Tidak ada deskripsi"}</Text>
+          <Text style={styles.deskripsi}>{reportDetails.deskripsi}</Text>
         </View>
 
-        {/* INFO */}
-        <View style={styles.card}>
+        {/* Informasi Laporan */}
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informasi Laporan</Text>
-
-          <View style={styles.infoRow}>
-            <Text>Tanggal</Text>
-            <Text>{dataLaporan?.tanggal}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text>Jam</Text>
-            <Text>{dataLaporan?.jam}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text>Status</Text>
-            <Text>{dataLaporan?.status}</Text>
-          </View>
-        </View>
-
-        {/* TIMELINE */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Riwayat Status</Text>
-
-          {['Dikirim', 'Diproses', 'Selesai'].map((item, i) => (
-            <View key={i} style={{ flexDirection: 'row', marginBottom: 8 }}>
-              <Ionicons
-                name="checkmark-circle"
-                size={18}
-                color={
-                  item === dataLaporan?.status || item === "Dikirim"
-                    ? "green"
-                    : "gray"
-                }
-              />
-              <Text style={{ marginLeft: 10 }}>{item}</Text>
+          <View style={styles.detailBox}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Tanggal Laporan</Text>
+              <Text style={styles.detailValue}>
+                {reportDetails.informasiLaporan.tanggalLaporan}
+              </Text>
             </View>
-          ))}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Target Selesai</Text>
+              <Text style={styles.detailValue}>
+                {reportDetails.informasiLaporan.perkiraaanSelesai}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Tanggal Selesai</Text>
+              <Text style={styles.detailValue}>
+                {reportDetails.informasiLaporan.tanggalSelesai}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Durasi Pengerjaan</Text>
+              <Text style={styles.detailValue}>
+                {reportDetails.informasiLaporan.durasiPengerjaan}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Status Boleh</Text>
+              <Text style={styles.detailValue}>
+                {reportDetails.informasiLaporan.statusBoleh}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* BUTTON (PASTI KELIHATAN) */}
+        {/* Riwayat Progres */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Riwayat Progres</Text>
+          <View style={styles.timeline}>
+            {reportDetails.riwayatProgres.map((item, index) => (
+              <View key={index} style={styles.timelineItem}>
+                <View style={styles.timelineMarker} />
+                <View style={styles.timelineContent}>
+                  <Text style={styles.timelineDate}>{item.tanggal}</Text>
+                  <Text style={styles.timelineStatus}>{item.status}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.btnYellow}
-            onPress={() => router.push('/(tabs)/Masyarakat/HalamanLapor')}
+            style={styles.laporButton}
+            onPress={() => navigation.navigate('HalamanLapor')}
           >
-            <Text style={styles.btnText}>Laporkan Ulang</Text>
+            <Text style={styles.laporButtonText}>Laporan Ulang</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.btnBlue}
-            onPress={() => router.push('/(tabs)/Masyarakat/HalamanBeranda')}
+            style={styles.kembaliButton}
+            onPress={() => navigation.navigate('HalamanBeranda')}
           >
-            <Text style={styles.btnText}>Kembali</Text>
+            <Text style={styles.kembaliButtonText}>Kembali Ke Beranda</Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F2' },
-
-  // 🔥 HEADER DIPERKECIL
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
   header: {
-    backgroundColor: '#3E4A72',
+    backgroundColor: '#2C3E50',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 12, // ❗ sebelumnya terlalu besar
-  },
-
-  headerTitle: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-
-  scrollContent: {
-    padding: 15,
-    paddingBottom: 100, // 🔥 penting biar tombol kelihatan
-  },
-
-  cardUtama: {
-    backgroundColor: '#DCE8D2',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-
-  rowBetween: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
   },
-
-  label: { fontSize: 12, color: '#555' },
-  value: { fontWeight: 'bold' },
-  judul: { fontSize: 16, fontWeight: 'bold' },
-
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
   },
-
-  card: {
-    backgroundColor: '#E0E0E0',
+  scrollContainer: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingTop: 15,
+  },
+  infoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
     padding: 15,
-    borderRadius: 10,
-    marginTop: 10,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
   },
-
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 3,
+    alignItems: 'center',
+    paddingVertical: 10,
   },
-
-  bigImg: {
-    width: '100%',
-    height: 150,
-    borderRadius: 10,
+  infoLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+  infoValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
+    marginLeft: 5,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
     marginBottom: 10,
   },
-
-  // 🔥 BUTTON AREA FIX
-  buttonContainer: {
+  photoGrid: {
     flexDirection: 'row',
-    marginTop: 20,
+    justifyContent: 'space-between',
     gap: 10,
   },
-
-  btnYellow: {
-    flex: 1,
-    backgroundColor: '#F2B705',
+  photoItem: {
+    width: '48%',
+    height: 120,
+    borderRadius: 8,
+    backgroundColor: '#E0E0E0',
+  },
+  deskripsi: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 20,
+    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
   },
-
-  btnBlue: {
-    flex: 1,
-    backgroundColor: '#3E4A72',
-    padding: 12,
+  detailBox: {
+    backgroundColor: '#fff',
     borderRadius: 8,
+    padding: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+    flex: 1,
+  },
+  detailValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#333',
+    flex: 1,
+    textAlign: 'right',
+  },
+  timeline: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  timelineMarker: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+    marginRight: 12,
+    marginTop: 2,
+  },
+  timelineContent: {
+    flex: 1,
+  },
+  timelineDate: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#333',
+  },
+  timelineStatus: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 3,
+  },
+  buttonContainer: {
+    gap: 10,
+    marginBottom: 30,
+  },
+  laporButton: {
+    backgroundColor: '#FFD700',
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: 'center',
   },
-
-  btnText: {
-    color: 'white',
-    fontWeight: 'bold',
+  laporButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  kembaliButton: {
+    backgroundColor: '#2C3E50',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  kembaliButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
   },
 });
+
+export default HalamanDetailRiwayat;
