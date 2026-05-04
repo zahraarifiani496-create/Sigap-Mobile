@@ -1,10 +1,7 @@
-import { Stack } from "expo-router";
-import { LaporanProvider } from "../context/LaporanContext";
+import { Stack } from 'expo-router';
 
-export default function RootLayout() {
+export default function Layout() {
   return (
-    <LaporanProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </LaporanProvider>
+    <Stack screenOptions={{ headerShown: false }} />
   );
 }

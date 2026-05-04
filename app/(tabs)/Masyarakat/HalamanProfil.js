@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const ProfileScreen = ({ navigation }) => {
-  const [showDropdown, setShowDropdown] = useState<{ [key: string]: boolean }>({
+  const [showDropdown, setShowDropdown] = useState({
     password: false,
     laporan: false,
     lokasi: false,
@@ -24,7 +24,8 @@ const ProfileScreen = ({ navigation }) => {
     email: 'Email',
   });
 
-  const toggleDropdown = (key: string) => {
+  // ✅ FIX (hapus :string)
+  const toggleDropdown = (key) => {
     setShowDropdown((prev) => ({
       ...prev,
       [key]: !prev[key],
@@ -33,16 +34,17 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* HEADER */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Avatar Section */}
+        
+        {/* AVATAR */}
         <View style={styles.avatarSection}>
           <Image
-            source={require('../assets/avatar.png')}
+            source={{ uri: 'https://via.placeholder.com/100' }} 
             style={styles.avatar}
           />
           <TouchableOpacity style={styles.editButton}>
@@ -50,14 +52,12 @@ const ProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Form Section */}
+        {/* FORM */}
         <View style={styles.formSection}>
           <View style={styles.inputWrapper}>
             <Ionicons name="person-outline" size={20} color="#999" />
             <TextInput
               style={styles.input}
-              placeholder="Nama Lengkap"
-              placeholderTextColor="#999"
               value={formData.nama}
               onChangeText={(text) => setFormData({ ...formData, nama: text })}
             />
@@ -67,8 +67,6 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name="call-outline" size={20} color="#999" />
             <TextInput
               style={styles.input}
-              placeholder="Nomor WhatsApp"
-              placeholderTextColor="#999"
               value={formData.phone}
               onChangeText={(text) => setFormData({ ...formData, phone: text })}
               keyboardType="phone-pad"
@@ -79,8 +77,6 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name="mail-outline" size={20} color="#999" />
             <TextInput
               style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#999"
               value={formData.email}
               onChangeText={(text) => setFormData({ ...formData, email: text })}
               keyboardType="email-address"
@@ -95,9 +91,10 @@ const ProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Dropdown Section */}
+        {/* DROPDOWN */}
         <View style={styles.dropdownSection}>
-          {/* Dropdown 1: Ganti Kata Sandi */}
+          
+          {/* PASSWORD */}
           <TouchableOpacity
             style={styles.dropdownHeader}
             onPress={() => toggleDropdown('password')}
@@ -112,16 +109,17 @@ const ProfileScreen = ({ navigation }) => {
               color="#999"
             />
           </TouchableOpacity>
+
           {showDropdown.password && (
             <View style={styles.dropdownContent}>
-              <Text style={styles.dropdownText}>Ubah kata sandi Anda dengan aman</Text>
+              <Text style={styles.dropdownText}>Ubah kata sandi Anda</Text>
               <TouchableOpacity style={styles.subButton}>
                 <Text style={styles.subButtonText}>Ganti Sekarang</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Dropdown 2: Laporan Belum Diproses */}
+          {/* LAPORAN */}
           <TouchableOpacity
             style={styles.dropdownHeader}
             onPress={() => toggleDropdown('laporan')}
@@ -136,23 +134,24 @@ const ProfileScreen = ({ navigation }) => {
               color="#999"
             />
           </TouchableOpacity>
+
           {showDropdown.laporan && (
             <View style={styles.dropdownContent}>
-              <Text style={styles.dropdownText}>Anda memiliki 2 laporan yang belum diproses</Text>
+              <Text style={styles.dropdownText}>Ada laporan yang belum diproses</Text>
               <TouchableOpacity style={styles.subButton}>
                 <Text style={styles.subButtonText}>Lihat Laporan</Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* Dropdown 3: Masalah Lokasi Peta */}
+          {/* LOKASI */}
           <TouchableOpacity
             style={styles.dropdownHeader}
             onPress={() => toggleDropdown('lokasi')}
           >
             <View style={styles.dropdownTitleContainer}>
               <Ionicons name="location-outline" size={20} color="#999" />
-              <Text style={styles.dropdownTitle}>Masalah Lokasi Peta</Text>
+              <Text style={styles.dropdownTitle}>Masalah Lokasi</Text>
             </View>
             <Ionicons
               name={showDropdown.lokasi ? 'chevron-up' : 'chevron-down'}
@@ -160,9 +159,10 @@ const ProfileScreen = ({ navigation }) => {
               color="#999"
             />
           </TouchableOpacity>
+
           {showDropdown.lokasi && (
             <View style={styles.dropdownContent}>
-              <Text style={styles.dropdownText}>Jika mengalami masalah dengan lokasi peta, hubungi admin kami</Text>
+              <Text style={styles.dropdownText}>Hubungi admin jika lokasi error</Text>
               <TouchableOpacity style={styles.subButton}>
                 <Text style={styles.subButtonText}>Hubungi Admin</Text>
               </TouchableOpacity>
@@ -170,36 +170,22 @@ const ProfileScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Help Section */}
+        {/* HELP */}
         <View style={styles.helpSection}>
           <Text style={styles.helpTitle}>Hubungi Kami</Text>
 
           <TouchableOpacity
             style={styles.helpButton}
-            onPress={() => alert('Membuka WhatsApp Admin...')}
+            onPress={() => alert('WhatsApp Admin')}
           >
             <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
             <View style={styles.helpButtonText}>
               <Text style={styles.helpButtonTitle}>Hubungi Admin</Text>
-              <Text style={styles.helpButtonSubtitle}>Via WhatsApp</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#999" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.helpButton}
-            onPress={() => alert('Mengunduh form admin...')}
-          >
-            <Ionicons name="document-download-outline" size={24} color="#FF6B6B" />
-            <View style={styles.helpButtonText}>
-              <Text style={styles.helpButtonTitle}>Download Form Admin</Text>
-              <Text style={styles.helpButtonSubtitle}>Panduan Lengkap</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#999" />
           </TouchableOpacity>
         </View>
 
-        {/* Logout Button */}
+        {/* LOGOUT */}
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => navigation.navigate('Login')}
@@ -207,9 +193,10 @@ const ProfileScreen = ({ navigation }) => {
           <Ionicons name="log-out-outline" size={20} color="#FF6B6B" />
           <Text style={styles.logoutButtonText}>Keluar</Text>
         </TouchableOpacity>
+
       </ScrollView>
 
-      {/* Bottom Navigation */}
+      {/* BOTTOM NAV */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Dashboard')}>
           <Ionicons name="home-outline" size={24} color="#999" />
@@ -241,204 +228,38 @@ const ProfileScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  header: {
-    backgroundColor: '#2C3E50',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 15,
-    paddingTop: 15,
-  },
-  avatarSection: {
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#00BCD4',
-    marginBottom: 10,
-  },
-  editButton: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#2C3E50',
-  },
-  editButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2C3E50',
-  },
-  formSection: {
-    marginBottom: 20,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    height: 45,
-  },
-  input: {
-    flex: 1,
-    marginHorizontal: 10,
-    fontSize: 13,
-    color: '#333',
-  },
-  simpanButton: {
-    backgroundColor: '#FFD700',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  simpanButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  dropdownSection: {
-    marginBottom: 20,
-  },
-  dropdownHeader: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  dropdownTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  dropdownTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#333',
-    marginLeft: 10,
-  },
-  dropdownContent: {
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 10,
-  },
-  dropdownText: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 10,
-    lineHeight: 18,
-  },
-  subButton: {
-    backgroundColor: '#FFD700',
-    borderRadius: 6,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  subButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  helpSection: {
-    marginBottom: 20,
-  },
-  helpTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 10,
-  },
-  helpButton: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  helpButtonText: {
-    flex: 1,
-    marginHorizontal: 12,
-  },
-  helpButtonTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#333',
-  },
-  helpButtonSubtitle: {
-    fontSize: 11,
-    color: '#999',
-    marginTop: 3,
-  },
-  logoutButton: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: '#FF6B6B',
-  },
-  logoutButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FF6B6B',
-    marginLeft: 8,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    paddingVertical: 8,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-  },
-  active: {
-    borderBottomWidth: 3,
-    borderBottomColor: '#2C3E50',
-  },
-  navLabel: {
-    fontSize: 10,
-    color: '#999',
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  activeLabel: {
-    color: '#2C3E50',
-    fontWeight: '700',
-  },
+  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  header: { backgroundColor: '#2C3E50', padding: 15 },
+  headerTitle: { color: '#fff', fontWeight: '700', fontSize: 18 },
+
+  scrollContainer: { padding: 15 },
+
+  avatarSection: { alignItems: 'center', marginBottom: 20 },
+  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 10 },
+  editButton: { borderWidth: 1, borderColor: '#2C3E50', padding: 8, borderRadius: 20 },
+  editButtonText: { fontSize: 12 },
+
+  inputWrapper: { flexDirection: 'row', backgroundColor: '#fff', padding: 10, marginBottom: 10, borderRadius: 8 },
+  input: { flex: 1, marginLeft: 10 },
+
+  simpanButton: { backgroundColor: '#FFD700', padding: 12, borderRadius: 8, alignItems: 'center' },
+  simpanButtonText: { color: '#fff', fontWeight: '700' },
+
+  dropdownHeader: { backgroundColor: '#fff', padding: 12, marginTop: 10, flexDirection: 'row', justifyContent: 'space-between' },
+  dropdownTitleContainer: { flexDirection: 'row', alignItems: 'center' },
+  dropdownTitle: { marginLeft: 10 },
+  dropdownContent: { backgroundColor: '#fff', padding: 10 },
+
+  helpSection: { marginTop: 20 },
+  helpButton: { flexDirection: 'row', padding: 10, backgroundColor: '#fff', marginTop: 10 },
+
+  logoutButton: { marginTop: 20, alignItems: 'center' },
+
+  bottomNav: { flexDirection: 'row', backgroundColor: '#fff' },
+  navItem: { flex: 1, alignItems: 'center', padding: 10 },
+  navLabel: { fontSize: 10 },
+  active: { borderBottomWidth: 2 },
+  activeLabel: { color: '#2C3E50' },
 });
 
 export default ProfileScreen;

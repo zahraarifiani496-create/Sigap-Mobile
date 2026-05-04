@@ -22,12 +22,12 @@ const ResetPasswordScreen = ({ navigation }) => {
       return;
     }
 
-    Alert.alert('Success', 'Kami telah mengirimkan kode pemulihan');
-    navigation.navigate('VerifyCode');
+    Alert.alert('Success', 'Kode pemulihan dikirim');
+    navigation.navigate('HalamanKodePemulihan');
   };
 
   const handleBackToLogin = () => {
-    navigation.navigate('Login');
+    navigation.navigate('HalamanLogin');
   };
 
   return (
@@ -37,54 +37,48 @@ const ResetPasswordScreen = ({ navigation }) => {
         style={styles.keyboardAvoid}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleBackToLogin} style={styles.backButton}>
+            <TouchableOpacity onPress={handleBackToLogin}>
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Riset Kata Sandi</Text>
-            <View style={styles.backButtonPlaceholder} />
+
+            <Text style={styles.headerTitle}>Reset Kata Sandi</Text>
+
+            <View style={{ width: 24 }} />
           </View>
 
           {/* Content */}
           <View style={styles.content}>
-            {/* Description */}
-            <View style={styles.descriptionSection}>
-              <Text style={styles.descriptionTitle}>Masukan Email/Nomor WhatsApp Anda untuk menerima tautan pemulihan</Text>
-              <Text style={styles.descriptionSubtitle}>Alamat Email atau Nomor WhatsApp</Text>
-            </View>
+            <Text style={styles.description}>
+              Masukkan Email atau Nomor WhatsApp untuk menerima kode pemulihan
+            </Text>
 
-            {/* Input Field */}
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email atau Nomor WhatsApp"
-                placeholderTextColor="#999"
-                value={emailOrPhone}
-                onChangeText={setEmailOrPhone}
-                keyboardType="default"
-              />
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Email / Nomor WhatsApp"
+              placeholderTextColor="#999"
+              value={emailOrPhone}
+              onChangeText={setEmailOrPhone}
+            />
 
-            {/* Continue Button */}
-            <TouchableOpacity
-              style={styles.continueButton}
-              onPress={handleContinue}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.continueButtonText}>Lanjut Ke Pemulihan</Text>
+            <TouchableOpacity style={styles.button} onPress={handleContinue}>
+              <Text style={styles.buttonText}>Lanjut Ke Pemulihan</Text>
             </TouchableOpacity>
 
-            {/* Back to Login Link */}
-            <TouchableOpacity onPress={handleBackToLogin} style={styles.backLink}>
-              <Text style={styles.backLinkText}>Kembali ke Login?</Text>
+            <TouchableOpacity onPress={handleBackToLogin}>
+              <Text style={styles.backText}>Kembali ke Login</Text>
             </TouchableOpacity>
           </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
+
+export default ResetPasswordScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -99,79 +93,46 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#2C3E50',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  backButton: {
-    padding: 8,
-  },
-  backButtonPlaceholder: {
-    width: 40,
+    padding: 15,
   },
   headerTitle: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
-    flex: 1,
-    textAlign: 'center',
   },
   content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 30,
+    padding: 20,
   },
-  descriptionSection: {
-    marginBottom: 30,
-  },
-  descriptionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 15,
-    lineHeight: 20,
-  },
-  descriptionSubtitle: {
-    fontSize: 12,
-    color: '#999',
-    fontWeight: '500',
-  },
-  inputWrapper: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 25,
-    height: 50,
-    backgroundColor: '#F9F9F9',
-    justifyContent: 'center',
-  },
-  input: {
+  description: {
     fontSize: 14,
     color: '#333',
-  },
-  continueButton: {
-    backgroundColor: '#FFD700',
-    borderRadius: 8,
-    paddingVertical: 15,
-    alignItems: 'center',
     marginBottom: 20,
   },
-  continueButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    backgroundColor: '#F9F9F9',
   },
-  backLink: {
+  button: {
+    backgroundColor: '#FFD700',
+    padding: 15,
+    borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 15,
   },
-  backLinkText: {
-    fontSize: 12,
+  buttonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  backText: {
+    textAlign: 'center',
     color: '#0066CC',
     fontWeight: '600',
   },
 });
-
-export default ResetPasswordScreen;
