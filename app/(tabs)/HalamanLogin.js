@@ -1,19 +1,19 @@
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
+  View,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  ScrollView,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useRouter } from 'expo-router';
 
 const HalamanLogin = () => {
   const router = useRouter();
@@ -81,7 +81,7 @@ const HalamanLogin = () => {
         setErrors({ username: '', password: '' });
         
         // ✅ NAVIGASI YANG BENAR
-        router.replace('./HalamanBeranda');
+        router.replace('/HalamanBeranda');
       }, 2000);
     } catch (error) {
       setLoading(false);
@@ -92,12 +92,12 @@ const HalamanLogin = () => {
 
   const handleLupaPassword = () => {
     // ✅ NAVIGASI YANG BENAR
-    router.push('./HalamanLupaSandi');
+    router.push('/HalamanLupaSandi');
   };
 
   const handleDaftar = () => {
     // ✅ NAVIGASI YANG BENAR
-    router.push('./HalamanRegister');
+    router.push('/HalamanRegister');
   };
 
   return (

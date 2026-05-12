@@ -19,8 +19,8 @@ const HalamanDetailRiwayat = ({ navigation, route }) => {
     jenisLaporan: report?.title || 'Jalan Retak',
     lokasi: report?.address || 'Jin.Praja RW36 RT23',
     fotoLaporan: [
-      require('../../../assets/images/news.jpg'),
-      require('../../../assets/images/orang.png'),
+      require('../../assets/images/news.jpg'),
+      require('../../assets/images/orang.png'),
     ],
     deskripsi: 'Jalan mengalami kerusakan parah pada bagian bahu jalan terutama pada sisi sebelah timur. Kondisi ini sangat berbahaya bagi pengendara motor maupun mobil.',
     informasiLaporan: {

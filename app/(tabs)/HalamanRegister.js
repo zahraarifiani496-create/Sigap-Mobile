@@ -52,7 +52,7 @@ const HalamanRegister = ({ navigation }) => {
         {/* Logo - PATH DIPERBAIKI */}
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../../assets/images/LOGO-PUPR2.png')}
+            source={require('../../assets/images/LOGO-PUPR2.png')}
             style={styles.logo}
             resizeMode="contain"
           />
