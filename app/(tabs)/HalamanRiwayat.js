@@ -1,202 +1,258 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
+import { 
+  View, Text, ScrollView, TouchableOpacity, SafeAreaView, 
+  StyleSheet, Dimensions, Modal, FlatList 
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { 
+  Ionicons, 
+  Octicons,
+  AntDesign 
+} from '@expo/vector-icons';
 
-const HalamanRiwayat = ({ navigation }) => {
-  const [reports, setReports] = useState([
-    {
-      id: 'z10Fa',
-      title: 'Jalan Berlubang',
-      address: 'Jin Tuhur RW 16 RT8',
-      status: 'Diproses',
-      statusColor: '#FF9800',
-    },
-    {
-      id: '55IKL',
-      title: 'Drainase tersumbat',
-      address: 'Jin.Cibogo RW7 RT1',
-      status: 'Diproses',
-      statusColor: '#FF9800',
-    },
-    {
-      id: 'p27Hf',
-      title: 'Jembatan Retak',
-      address: 'Jin Praja RW 8 RT 23',
-      status: 'Selesai',
-      statusColor: '#4CAF50',
-    },
-    {
-      id: '1239gT',
-      title: 'Drainase tersumbat',
-      address: 'Jin.Rawa Badak RW 17 RT9',
-      status: 'Selesai',
-      statusColor: '#4CAF50',
-    },
-  ]);
+const { width } = Dimensions.get('window');
 
-  const renderReportCard = (report) => (
-    <TouchableOpacity
-      key={report.id}
-      style={[styles.reportCard, { borderLeftColor: report.statusColor }]}
-      onPress={() => navigation.navigate('HalamanDetailRiwayat', { report })}
-      activeOpacity={0.7}
-    >
-      <View style={styles.reportHeader}>
-        <Text style={styles.reportId}>ID : {report.id}</Text>
+// Data Dummy Laporan
+const DATA_LAPORAN = [
+  { id: "#REP-2024-0812", status: "Diproses", title: "Perbaikan Drainase Jalan Gatot Subroto", location: "Jl. Jend. Gatot Subroto No.Kav. 52, Kuningan Barat", date: "12 Okt 2023" },
+  { id: "#REP-2024-0745", status: "Selesai", title: "Lubang Jalan Berbahaya di Flyover Roxy", location: "Jl. Kyai Tapa, Grogol petamburan, Jakarta Barat", date: "28 Sep 2023" },
+  { id: "#REP-2024-0722", status: "Diproses", title: "Penerangan Jalan Umum Padam", location: "Jl. Benyamin Suaeb, Pademangan Timur", date: "15 Sep 2023" },
+  { id: "#REP-2024-0655", status: "Ditunda", title: "Penumpukan Sampah di Saluran Air", location: "Jl. Palmerah Barat, Kebayoran Lama", date: "22 Agu 2023" },
+  { id: "#REP-2024-0511", status: "Selesai", title: "Jembatan Penyeberangan Rusak", location: "Sudirman, Jakarta Pusat", date: "01 Agu 2023" },
+];
+
+const ReportCard = ({ item, onPress }) => (
+  <TouchableOpacity style={styles.card} onPress={onPress}>
+    <View style={styles.cardHeader}>
+      <View style={styles.idBadge}>
+        <Text style={styles.idText}>{item.id}</Text>
       </View>
-
-      <Text style={styles.reportTitle}>{report.title}</Text>
-      <Text style={styles.reportAddress}>{report.address}</Text>
-
       <View style={styles.statusContainer}>
-        <Text style={[styles.statusText, { color: report.statusColor }]}>
-          Status : {report.status}
-        </Text>
+        <View style={[styles.dot, { 
+          backgroundColor: item.status === 'Selesai' ? '#22C55E' : item.status === 'Diproses' ? '#F97316' : '#EF4444' 
+        }]} />
+        <Text style={[styles.statusText, { 
+          color: item.status === 'Selesai' ? '#22C55E' : item.status === 'Diproses' ? '#F97316' : '#EF4444' 
+        }]}>{item.status}</Text>
       </View>
+    </View>
+    
+    <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+    
+    <View style={styles.locationContainer}>
+      <Ionicons name="location-outline" size={12} color="#94A3B8" />
+      <Text style={styles.locationText} numberOfLines={2}>{item.location}</Text>
+    </View>
+
+    <View style={styles.cardFooter}>
+      <View style={styles.dateContainer}>
+        <Ionicons name="calendar-outline" size={12} color="#94A3B8" />
+        <Text style={styles.dateText}>{item.date}</Text>
+      </View>
+      <View style={styles.detailBtn}>
+        <Text style={styles.detailText}>Detail</Text>
+        <AntDesign name="arrowright" size={12} color="#2563EB" />
+      </View>
+    </View>
+  </TouchableOpacity>
+);
+
+export default function HalamanRiwayat({ navigation }) {
+  const [filter, setFilter] = useState('Semua');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Logika Filter
+  const filteredData = filter === 'Semua' 
+    ? DATA_LAPORAN 
+    : DATA_LAPORAN.filter(item => item.status === filter);
+
+  const renderFilterOption = (status) => (
+    <TouchableOpacity 
+      style={styles.filterOption} 
+      onPress={() => { setFilter(status); setModalVisible(false); }}
+    >
+      <Text style={[styles.filterOptionText, filter === status && { color: '#2563EB', fontWeight: 'bold' }]}>{status}</Text>
+      {filter === status && <Ionicons name="checkmark" size={18} color="#2563EB" />}
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Riwayat Laporan Saya</Text>
+      {/* Navbar Atas */}
+      <View style={styles.navbar}>
+        <Text style={styles.navTitle}>SIGAP PUPR</Text>
+        <Ionicons name="notifications-outline" size={20} color="white" />
       </View>
 
-      {/* Reports List */}
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.reportsList}>
-          {reports.map((report) => renderReportCard(report))}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header & Tombol Filter */}
+        <View style={styles.headerSection}>
+          <View style={{ flex: 1, paddingRight: 10 }}>
+            <Text style={styles.title}>Riwayat Laporan</Text>
+            <Text style={styles.subtitle}>Pantau laporan infrastruktur Anda secara real-time.</Text>
+          </View>
+          <TouchableOpacity style={styles.filterBtn} onPress={() => setModalVisible(true)}>
+            <Octicons name="sliders" size={14} color="#475569" />
+            <Text style={styles.filterText}>{filter}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Grid Laporan */}
+        <View style={styles.grid}>
+          {filteredData.map((item, index) => (
+            <ReportCard 
+              key={index} 
+              item={item} 
+              onPress={() => navigation.navigate('/HalamanDetailRiwayat', { data: item })}
+            />
+          ))}
+
+          {/* Box Ringkasan */}
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>Ringkasan</Text>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Selesai</Text>
+              <Text style={styles.summaryValue}>24</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Proses</Text>
+              <Text style={styles.summaryValue}>12</Text>
+            </View>
+            <View style={[styles.summaryItem, styles.summaryActive]}>
+              <Text style={styles.summaryLabel}>Total</Text>
+              <Text style={styles.summaryValue}>36</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Pagination */}
+        <View style={styles.pagination}>
+          <TouchableOpacity onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}>
+            <Ionicons name="chevron-back" size={16} color="#94A3B8" />
+          </TouchableOpacity>
+          {[1, 2, 3].map(page => (
+            <TouchableOpacity 
+              key={page} 
+              style={[styles.pageBtn, currentPage === page && styles.pageActive]}
+              onPress={() => setCurrentPage(page)}
+            >
+              <Text style={currentPage === page ? styles.pageTextActive : styles.pageText}>{page}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity onPress={() => setCurrentPage(prev => prev + 1)}>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation */}
+      {/* Modal Filter Status */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Pilih Status</Text>
+            {renderFilterOption('Semua')}
+            {renderFilterOption('Selesai')}
+            {renderFilterOption('Diproses')}
+            {renderFilterOption('Ditunda')}
+            <TouchableOpacity style={styles.closeModal} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeModalText}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Navigasi Bar Bawah (Custom Bottom Tab Bar) */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanBeranda')}>
-          <Ionicons name="home-outline" size={24} color="#999" />
+        <TouchableOpacity style={styles.navItem}>
+          <Ionicons name="home-outline" size={22} color="#94A3B8" />
           <Text style={styles.navLabel}>Beranda</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.navItem, styles.active]}>
-          <Ionicons name="list-outline" size={24} color="#2C3E50" />
-          <Text style={[styles.navLabel, styles.activeLabel]}>Laporan</Text>
+        <TouchableOpacity style={styles.navItem}>
+          <Ionicons name="document-text" size={22} color="#2563EB" />
+          <Text style={[styles.navLabel, {color: '#2563EB'}]}>Riwayat</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanRiwayat')}>
-          <Ionicons name="time-outline" size={24} color="#999" />
-          <Text style={styles.navLabel}>Riwayat</Text>
+        <TouchableOpacity style={styles.navItem}>
+          <View style={styles.addBtn}>
+            <Ionicons name="add" size={30} color="white" />
+          </View>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanBantuan')}>
-          <Ionicons name="help-circle-outline" size={24} color="#999" />
-          <Text style={styles.navLabel}>Bantuan</Text>
+        <TouchableOpacity style={styles.navItem}>
+          <Ionicons name="stats-chart-outline" size={22} color="#94A3B8" />
+          <Text style={styles.navLabel}>Statistik</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HalamanProfil')}>
-          <Ionicons name="person-outline" size={24} color="#999" />
+        <TouchableOpacity style={styles.navItem}>
+          <Ionicons name="person-outline" size={22} color="#94A3B8" />
           <Text style={styles.navLabel}>Profil</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  navbar: { backgroundColor: '#3B466D', padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 45 },
+  navTitle: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  scrollContent: { padding: 16, paddingBottom: 100 },
+  headerSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  title: { fontSize: 20, fontWeight: 'bold', color: '#1E293B' },
+  subtitle: { fontSize: 12, color: '#64748B', marginTop: 4 },
+  filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  filterText: { fontSize: 12, marginLeft: 6, fontWeight: '600', color: '#1E293B' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  card: { backgroundColor: 'white', width: '48%', borderRadius: 16, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#F1F5F9', elevation: 2 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  idBadge: { backgroundColor: '#EFF6FF', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  idText: { fontSize: 9, color: '#3B82F6', fontWeight: '700' },
+  statusContainer: { flexDirection: 'row', alignItems: 'center' },
+  dot: { width: 6, height: 6, borderRadius: 3, marginRight: 4 },
+  statusText: { fontSize: 9, fontWeight: '700' },
+  cardTitle: { fontSize: 13, fontWeight: 'bold', color: '#1E293B', marginBottom: 8, height: 38 },
+  locationContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15 },
+  locationText: { fontSize: 9, color: '#64748B', marginLeft: 4, flex: 1 },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F8FAFC', paddingTop: 10 },
+  dateContainer: { flexDirection: 'row', alignItems: 'center' },
+  dateText: { fontSize: 9, color: '#94A3B8', marginLeft: 4 },
+  detailBtn: { flexDirection: 'row', alignItems: 'center' },
+  detailText: { fontSize: 10, color: '#2563EB', fontWeight: 'bold', marginRight: 4 },
+  summaryCard: { backgroundColor: '#3B466D', width: '48%', borderRadius: 16, padding: 12, marginBottom: 16 },
+  summaryTitle: { color: 'white', fontWeight: 'bold', fontSize: 14, marginBottom: 10 },
+  summaryItem: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.1)', padding: 8, borderRadius: 8, marginBottom: 5 },
+  summaryActive: { backgroundColor: 'rgba(255,255,255,0.2)' },
+  summaryLabel: { color: 'white', fontSize: 10 },
+  summaryValue: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  pagination: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+  pageBtn: { width: 30, height: 30, justifyContent: 'center', alignItems: 'center', marginHorizontal: 5 },
+  pageActive: { backgroundColor: '#EAB308', borderRadius: 8 },
+  pageTextActive: { color: 'white', fontWeight: 'bold' },
+  pageText: { color: '#64748B' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { width: '80%', backgroundColor: 'white', borderRadius: 16, padding: 20 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
+  filterOption: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  filterOptionText: { fontSize: 14, color: '#475569' },
+  closeModal: { marginTop: 15, padding: 10, alignItems: 'center' },
+  closeModalText: { color: '#EF4444', fontWeight: 'bold' },
+  bottomNav: { 
+    flexDirection: 'row', 
+    backgroundColor: 'white', 
+    paddingVertical: 10, 
+    borderTopWidth: 1, 
+    borderTopColor: '#E2E8F0',
+    position: 'absolute',
+    bottom: 0,
+    width: '100%'
   },
-  header: {
-    backgroundColor: '#2C3E50',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 15,
-    paddingTop: 15,
-  },
-  reportsList: {
-    marginBottom: 20,
-  },
-  reportCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 12,
-    borderLeftWidth: 5,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  reportHeader: {
-    marginBottom: 8,
-  },
-  reportId: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFD700',
-  },
-  reportTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 4,
-  },
-  reportAddress: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 10,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    paddingVertical: 8,
-  },
-  navItem: {
-    flex: 1,
+  navItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  navLabel: { fontSize: 10, color: '#94A3B8', marginTop: 4 },
+  addBtn: { 
+    backgroundColor: '#3B466D', 
+    width: 50, 
+    height: 50, 
+    borderRadius: 25, 
+    justifyContent: 'center', 
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-  },
-  active: {
-    borderBottomWidth: 3,
-    borderBottomColor: '#2C3E50',
-  },
-  navLabel: {
-    fontSize: 10,
-    color: '#999',
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  activeLabel: {
-    color: '#2C3E50',
-    fontWeight: '700',
-  },
+    marginTop: -30,
+    elevation: 5
+  }
 });
-
-export default HalamanRiwayat;

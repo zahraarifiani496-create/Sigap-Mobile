@@ -1,348 +1,282 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-  Image,
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  StyleSheet, 
+  Image, 
+  Dimensions 
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { 
+  Ionicons, 
+  MaterialIcons, 
+  FontAwesome5, 
+  MaterialCommunityIcons 
+} from '@expo/vector-icons';
 
-const HalamanDetailRiwayat = ({ navigation, route }) => {
-  const { report } = route.params || {};
+const { width } = Dimensions.get('window');
 
-  const reportDetails = {
-    idLaporan: 'AM1223B8Ju',
-    status: 'Selesai',
-    jenisLaporan: report?.title || 'Jalan Retak',
-    lokasi: report?.address || 'Jin.Praja RW36 RT23',
-    fotoLaporan: [
-      require('../../assets/images/news.jpg'),
-      require('../../assets/images/orang.png'),
-    ],
-    deskripsi: 'Jalan mengalami kerusakan parah pada bagian bahu jalan terutama pada sisi sebelah timur. Kondisi ini sangat berbahaya bagi pengendara motor maupun mobil.',
-    informasiLaporan: {
-      tanggalLaporan: '27 Oktober 2026',
-      perkiraaanSelesai: '10 Mei 2025',
-      tanggalSelesai: '01 Mei 2025',
-      durasiPengerjaan: '7 hari',
-      statusBoleh: 'Boleh Penerangkan',
-    },
-    riwayatProgres: [
-      { tanggal: '27 Oktober 2026, 14:30', status: 'Laporan diterima oleh admin' },
-      { tanggal: '10 Mei 2025, 08:00', status: 'Laporan diverifikasi' },
-      { tanggal: '15 Mei 2025, 09:30', status: 'Pekerjaan dimulai' },
-      { tanggal: '01 Mei 2025, 16:30', status: 'Selesai' },
-    ],
-  };
-
+// Tambahkan destructuring { navigation } pada props
+export default function HalamanDetailRiwayat({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detail Riwayat Laporan</Text>
-        <View style={{ width: 24 }} />
+      {/* App Bar */}
+      <View style={styles.appBar}>
+        <View style={styles.appBarLeft}>
+          {/* Tambahkan fungsi back */}
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.appBarTitle}>Detail Laporan</Text>
+        </View>
+        <View style={styles.appBarRight}>
+          <TouchableOpacity style={{ marginRight: 15 }}>
+            <Ionicons name="share-social-outline" size={22} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Ionicons name="ellipsis-vertical" size={22} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Info Card */}
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>ID Laporan</Text>
-            <Text style={styles.infoValue}>{reportDetails.idLaporan}</Text>
-          </View>
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Status</Text>
-            <View style={[styles.statusBadge, { backgroundColor: '#4CAF50' }]}>
-              <Ionicons name="checkmark-circle" size={16} color="#fff" />
-              <Text style={styles.statusBadgeText}>{reportDetails.status}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        
+        {/* Status & ID Header */}
+        <View style={styles.headerCards}>
+          <View style={styles.statusMainCard}>
+            <View style={styles.checkIconCircle}>
+                <MaterialIcons name="check-circle" size={40} color="#3B466D" />
             </View>
-          </View>
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Jenis Laporan</Text>
-            <Text style={styles.infoValue}>{reportDetails.jenisLaporan}</Text>
-          </View>
-          <View style={styles.divider} />
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Lokasi</Text>
-            <Text style={styles.infoValue}>{reportDetails.lokasi}</Text>
-          </View>
-        </View>
-
-        {/* Foto Laporan */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Foto Laporan</Text>
-          <View style={styles.photoGrid}>
-            {reportDetails.fotoLaporan.map((foto, index) => (
-              <Image key={index} source={foto} style={styles.photoItem} />
-            ))}
-          </View>
-        </View>
-
-        {/* Deskripsi */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Deskripsi Laporan</Text>
-          <Text style={styles.deskripsi}>{reportDetails.deskripsi}</Text>
-        </View>
-
-        {/* Informasi Laporan */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informasi Laporan</Text>
-          <View style={styles.detailBox}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Tanggal Laporan</Text>
-              <Text style={styles.detailValue}>
-                {reportDetails.informasiLaporan.tanggalLaporan}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Target Selesai</Text>
-              <Text style={styles.detailValue}>
-                {reportDetails.informasiLaporan.perkiraaanSelesai}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Tanggal Selesai</Text>
-              <Text style={styles.detailValue}>
-                {reportDetails.informasiLaporan.tanggalSelesai}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Durasi Pengerjaan</Text>
-              <Text style={styles.detailValue}>
-                {reportDetails.informasiLaporan.durasiPengerjaan}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Status Boleh</Text>
-              <Text style={styles.detailValue}>
-                {reportDetails.informasiLaporan.statusBoleh}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Riwayat Progres */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Riwayat Progres</Text>
-          <View style={styles.timeline}>
-            {reportDetails.riwayatProgres.map((item, index) => (
-              <View key={index} style={styles.timelineItem}>
-                <View style={styles.timelineMarker} />
-                <View style={styles.timelineContent}>
-                  <Text style={styles.timelineDate}>{item.tanggal}</Text>
-                  <Text style={styles.timelineStatus}>{item.status}</Text>
-                </View>
+            <View style={styles.statusContent}>
+              <View style={styles.badgeSelesai}>
+                <Text style={styles.badgeText}>Selesai Dikerjakan</Text>
               </View>
-            ))}
+              <Text style={styles.statusTitle}>Perbaikan Drainase Jalan Protokol</Text>
+              <Text style={styles.statusDesc}>Laporan Anda telah berhasil diverifikasi dan diselesaikan oleh tim teknis PUPR.</Text>
+            </View>
+          </View>
+
+          <View style={styles.idCard}>
+            <Text style={styles.idLabel}>ID LAPORAN</Text>
+            <Text style={styles.idValue}>#PU-2024-8872</Text>
+            <Text style={[styles.idLabel, { marginTop: 10 }]}>KATEGORI</Text>
+            <View style={styles.categoryRow}>
+              <Ionicons name="home" size={14} color="#3B466D" />
+              <Text style={styles.categoryText}>Infrastruktur Air & Drainase</Text>
+            </View>
           </View>
         </View>
 
-        {/* Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.laporButton}
-            onPress={() => navigation.navigate('HalamanLapor')}
-          >
-            <Text style={styles.laporButtonText}>Laporan Ulang</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.kembaliButton}
-            onPress={() => navigation.navigate('HalamanBeranda')}
-          >
-            <Text style={styles.kembaliButtonText}>Kembali Ke Beranda</Text>
-          </TouchableOpacity>
+        {/* Dokumentasi */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <MaterialIcons name="photo-library" size={18} color="#3B466D" />
+            <Text style={styles.sectionTitle}>Dokumentasi</Text>
+          </View>
+          <Text style={styles.photoCount}>4 Foto Terlampir</Text>
         </View>
+
+        <View style={styles.imageGrid}>
+          <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.mainImage} />
+          <View style={styles.sideImages}>
+            <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.subImage} />
+            <View style={styles.moreImageContainer}>
+              <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.subImage} />
+              <View style={styles.imageOverlay}>
+                <Text style={styles.overlayText}>+1</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Detail Informasi */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoTitleRow}>
+            <Ionicons name="information-circle-outline" size={18} color="#2563EB" />
+            <Text style={styles.infoTitle}>Detail Informasi</Text>
+          </View>
+
+          <View style={styles.infoGrid}>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>LOKASI KEJADIAN</Text>
+              <Text style={styles.infoValue}>Jl. Sudirman No. 45, Kebayoran Baru, Jakarta Selatan</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>WAKTU PELAPORAN</Text>
+              <Text style={styles.infoValue}>12 Mei 2024, 09:15 WIB</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>PELAPOR</Text>
+              <Text style={styles.infoValue}>Aditya Pratama</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>PRIORITAS</Text>
+              <View style={styles.priorityRow}>
+                <View style={[styles.dot, { backgroundColor: 'red' }]} />
+                <Text style={styles.infoValue}>Tinggi</Text>
+              </View>
+            </View>
+          </View>
+
+          <Text style={[styles.infoLabel, { marginTop: 15 }]}>DESKRIPSI MASALAH</Text>
+          <Text style={styles.descriptionText}>
+            Saluran drainase tersumbat total akibat tumpukan sedimen dan material sisa konstruksi, menyebabkan genangan setinggi 30cm setiap kali hujan deras.
+          </Text>
+        </View>
+
+        {/* Aktivitas Laporan (Timeline) */}
+        <View style={styles.timelineSection}>
+           <View style={styles.sectionTitleRow}>
+            <MaterialCommunityIcons name="chart-timeline-variant" size={18} color="#2563EB" />
+            <Text style={styles.sectionTitleBlue}>Aktivitas Laporan</Text>
+          </View>
+
+          {/* Timeline Item 1 */}
+          <View style={styles.timelineItem}>
+            <View style={styles.timelineLeft}>
+              <View style={[styles.timelineIcon, { backgroundColor: '#3B466D' }]}>
+                <Ionicons name="checkmark" size={14} color="white" />
+              </View>
+              <View style={styles.timelineLine} />
+            </View>
+            <View style={styles.timelineRight}>
+              <View style={styles.timelineContentCard}>
+                <View style={styles.timelineHeader}>
+                  <Text style={styles.timelineStatus}>Laporan Selesai</Text>
+                  <Text style={styles.timelineDate}>24 Mei, 14:00</Text>
+                </View>
+                <Text style={styles.timelineDesc}>Pekerjaan pembersihan drainase telah selesai dilakukan.</Text>
+                <TouchableOpacity style={styles.ratingButton}>
+                  <Ionicons name="chatbubble-outline" size={14} color="#2563EB" />
+                  <Text style={styles.ratingText}>Beri penilaian untuk pelayanan ini</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Map Preview */}
+          <View style={styles.mapContainer}>
+            <Image 
+              source={{ uri: 'https://via.placeholder.com/400x150' }} 
+              style={styles.mapImage} 
+            />
+            <View style={styles.mapOverlay}>
+              <Ionicons name="location" size={20} color="white" />
+              <Text style={styles.mapOverlayText}>Titik Koordinat Terverifikasi</Text>
+            </View>
+          </View>
+        </View>
+
       </ScrollView>
+
+      {/* Bottom Buttons */}
+      <View style={styles.bottomActions}>
+        {/* Tombol diganti menjadi Kembali ke Dashboard */}
+        <TouchableOpacity 
+          style={styles.btnSecondary} 
+          onPress={() => navigation.navigate('/HalamanBeranda')} // Pastikan nama route sesuai dengan di App.js anda
+        >
+          <Text style={styles.btnTextSecondary}>Kembali ke Dashboard</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.btnPrimary}>
+          <Text style={styles.btnTextPrimary}>Hubungi Petugas</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  appBar: { 
+    backgroundColor: '#3B466D', 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 16, 
+    paddingTop: 45, 
+    paddingBottom: 15 
   },
-  header: {
-    backgroundColor: '#2C3E50',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 15,
-    paddingTop: 15,
-  },
-  infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  infoLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
-  },
-  infoValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#333',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  statusBadgeText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 12,
-    marginLeft: 5,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 10,
-  },
-  photoGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  photoItem: {
-    width: '48%',
-    height: 120,
-    borderRadius: 8,
-    backgroundColor: '#E0E0E0',
-  },
-  deskripsi: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 20,
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-  },
-  detailBox: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-    flex: 1,
-  },
-  detailValue: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#333',
-    flex: 1,
-    textAlign: 'right',
-  },
-  timeline: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 12,
-  },
-  timelineItem: {
-    flexDirection: 'row',
-    marginBottom: 15,
-  },
-  timelineMarker: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#4CAF50',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  timelineContent: {
-    flex: 1,
-  },
-  timelineDate: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#333',
-  },
-  timelineStatus: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 3,
-  },
-  buttonContainer: {
-    gap: 10,
-    marginBottom: 30,
-  },
-  laporButton: {
-    backgroundColor: '#FFD700',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  laporButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  kembaliButton: {
-    backgroundColor: '#2C3E50',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  kembaliButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
-  },
-});
+  appBarLeft: { flexDirection: 'row', alignItems: 'center' },
+  appBarTitle: { color: 'white', fontWeight: 'bold', marginLeft: 15, fontSize: 16 },
+  appBarRight: { flexDirection: 'row' },
+  scrollContent: { padding: 16, paddingBottom: 100 },
+  
+  headerCards: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  statusMainCard: { backgroundColor: 'white', width: '65%', borderRadius: 16, padding: 12, flexDirection: 'row', elevation: 2 },
+  checkIconCircle: { marginRight: 10, justifyContent: 'center' },
+  statusContent: { flex: 1 },
+  badgeSelesai: { backgroundColor: '#DBEAFE', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, marginBottom: 5 },
+  badgeText: { color: '#2563EB', fontSize: 10, fontWeight: 'bold' },
+  statusTitle: { fontWeight: 'bold', fontSize: 12, color: '#1E293B' },
+  statusDesc: { fontSize: 9, color: '#64748B', marginTop: 2 },
+  
+  idCard: { backgroundColor: '#FBBF24', width: '32%', borderRadius: 16, padding: 12, elevation: 2 },
+  idLabel: { fontSize: 8, fontWeight: 'bold', color: '#B45309' },
+  idValue: { fontSize: 10, fontWeight: 'bold', color: 'white', marginTop: 2 },
+  categoryRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
+  categoryText: { fontSize: 8, color: '#3B466D', marginLeft: 4, fontWeight: '600' },
 
-export default HalamanDetailRiwayat;
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center' },
+  sectionTitle: { marginLeft: 6, fontWeight: 'bold', color: '#3B466D', fontSize: 13 },
+  photoCount: { fontSize: 10, color: '#94A3B8' },
+
+  imageGrid: { flexDirection: 'row', height: 200, marginBottom: 20 },
+  mainImage: { flex: 1, borderRadius: 12, marginRight: 8 },
+  sideImages: { flex: 1 },
+  subImage: { flex: 1, borderRadius: 12, marginBottom: 8 },
+  moreImageContainer: { flex: 1, position: 'relative' },
+  imageOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  overlayText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
+
+  infoCard: { backgroundColor: 'white', borderRadius: 16, padding: 16, elevation: 2, marginBottom: 20 },
+  infoTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
+  infoTitle: { color: '#2563EB', fontWeight: 'bold', marginLeft: 8 },
+  infoGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  infoItem: { width: '50%', marginBottom: 12 },
+  infoLabel: { fontSize: 9, fontWeight: 'bold', color: '#94A3B8', marginBottom: 4 },
+  infoValue: { fontSize: 11, fontWeight: 'bold', color: '#1E293B' },
+  priorityRow: { flexDirection: 'row', alignItems: 'center' },
+  dot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
+  descriptionText: { fontSize: 11, color: '#64748B', lineHeight: 16, marginTop: 5 },
+
+  timelineSection: { marginTop: 10 },
+  sectionTitleBlue: { marginLeft: 6, fontWeight: 'bold', color: '#2563EB', fontSize: 13 },
+  timelineItem: { flexDirection: 'row', marginTop: 15 },
+  timelineLeft: { alignItems: 'center', width: 30 },
+  timelineIcon: { width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', zIndex: 1 },
+  timelineLine: { width: 2, flex: 1, backgroundColor: '#E2E8F0', marginTop: -5 },
+  timelineRight: { flex: 1, paddingBottom: 20 },
+  timelineContentCard: { backgroundColor: 'white', padding: 12, borderRadius: 12, borderLeftWidth: 3, borderLeftColor: '#3B466D' },
+  timelineHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
+  timelineStatus: { fontWeight: 'bold', fontSize: 12, color: '#2563EB' },
+  timelineDate: { fontSize: 10, color: '#94A3B8' },
+  timelineDesc: { fontSize: 11, color: '#64748B' },
+  ratingButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EFF6FF', padding: 8, borderRadius: 8, marginTop: 10 },
+  ratingText: { fontSize: 10, color: '#2563EB', marginLeft: 6, fontWeight: '600' },
+
+  mapContainer: { borderRadius: 16, overflow: 'hidden', height: 120, marginTop: 10 },
+  mapImage: { width: '100%', height: '100%' },
+  mapOverlay: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(59, 70, 109, 0.8)', flexDirection: 'row', alignItems: 'center', padding: 6, borderRadius: 20 },
+  mapOverlayText: { color: 'white', fontSize: 10, fontWeight: 'bold', marginLeft: 5 },
+
+  bottomActions: { 
+    position: 'absolute', 
+    bottom: 0, 
+    left: 0, 
+    right: 0, 
+    backgroundColor: 'white', 
+    flexDirection: 'row', 
+    padding: 16, 
+    borderTopWidth: 1, 
+    borderTopColor: '#F1F5F9' 
+  },
+  btnSecondary: { flex: 1, height: 45, justifyContent: 'center', alignItems: 'center', borderRadius: 12, backgroundColor: '#3B466D', marginRight: 10 },
+  btnPrimary: { flex: 1, height: 45, justifyContent: 'center', alignItems: 'center', borderRadius: 12, backgroundColor: '#FBBF24' },
+  btnTextSecondary: { color: 'white', fontWeight: 'bold', fontSize: 12, textAlign: 'center' },
+  btnTextPrimary: { color: '#3B466D', fontWeight: 'bold' }
+});
