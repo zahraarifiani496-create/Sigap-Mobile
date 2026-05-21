@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,15 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 
 const { width } = Dimensions.get('window');
 
 const HalamanTerkirim = () => {
   const router = useRouter();
-  const idLaporan = "PUPR-20231024-001"; // ID ini bisa didapat dari params atau state global
+  const { reportId } = useLocalSearchParams();
+  const idLaporan = reportId || "PUPR-20231024-001";
 
   const salinKeClipboard = async () => {
     try {
@@ -31,14 +32,6 @@ const HalamanTerkirim = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#3E4A70" />
-
-      {/* HEADER - Sesuai desain SIGAP PUPR */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>SIGAP PUPR</Text>
-        <TouchableOpacity>
-          <Icon name="bell-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
 
       <View style={styles.content}>
         {/* ICON SUKSES ORANYE/KUNING */}

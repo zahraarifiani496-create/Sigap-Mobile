@@ -1,10 +1,3 @@
-// app/(masyarakat)/profil.js
-// Dipindahkan dari: app/(tabs)/HalamanProfil.js
-// Perubahan:
-//   - Logout menggunakan useAuth().logout() dari AuthContext
-//   - Navigasi bottom nav menggunakan useRouter() dari expo-router
-//   - navigation.navigate() diganti router.push()
-
 import React, { useState } from 'react';
 import {
   View,
@@ -16,14 +9,16 @@ import {
   Image,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import userService from '../../services/userService';
 
 const ProfileScreen = () => {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
 
   const [showDropdown, setShowDropdown] = useState({
     password: false,
@@ -32,16 +27,75 @@ const ProfileScreen = () => {
   });
 
   const [formData, setFormData] = useState({
-    nama: user?.name || 'Nama Lengkap',
-    phone: user?.phone || 'Nomor WhatsApp',
-    email: user?.email || 'Email',
+    nama:  user?.name  ?? '',
+    phone: user?.phone ?? '',
+    email: user?.email ?? '',
   });
+
+  const [passwordData, setPasswordData] = useState({
+    current: '',
+    new: '',
+    confirm: '',
+  });
+
+  const [savingProfil,   setSavingProfil]   = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
   const toggleDropdown = (key) => {
     setShowDropdown((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
+  };
+
+  const handleSimpanProfil = async () => {
+    if (!formData.nama.trim()) {
+      Alert.alert('Error', 'Nama tidak boleh kosong');
+      return;
+    }
+    setSavingProfil(true);
+    try {
+      const response = await userService.updateProfil({
+        name:  formData.nama,
+        phone: formData.phone,
+      });
+      updateUser(response.user); // sinkronkan AuthContext
+      Alert.alert('Berhasil', 'Profil berhasil disimpan!');
+    } catch (e) {
+      Alert.alert('Gagal', e.message);
+    } finally {
+      setSavingProfil(false);
+    }
+  };
+
+  const handleGantiPassword = async () => {
+    if (!passwordData.current || !passwordData.new || !passwordData.confirm) {
+      Alert.alert('Error', 'Semua field password harus diisi');
+      return;
+    }
+    if (passwordData.new !== passwordData.confirm) {
+      Alert.alert('Error', 'Konfirmasi password tidak cocok');
+      return;
+    }
+    if (passwordData.new.length < 6) {
+      Alert.alert('Error', 'Password baru minimal 6 karakter');
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      await userService.gantiPassword({
+        currentPassword: passwordData.current,
+        newPassword:     passwordData.new,
+        confirmPassword: passwordData.confirm,
+      });
+      Alert.alert('Berhasil', 'Password berhasil diubah!');
+      setPasswordData({ current: '', new: '', confirm: '' });
+      setShowDropdown((prev) => ({ ...prev, password: false }));
+    } catch (e) {
+      Alert.alert('Gagal', e.message);
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   const handleLogout = () => {
@@ -54,10 +108,13 @@ const ProfileScreen = () => {
           text: 'Keluar',
           style: 'destructive',
           onPress: async () => {
-            // 1. Bersihkan state & storage
-            await logout();
-            // 2. Navigasi eksplisit ke login (lebih reliable dari RouteGuard di web)
-            router.replace('/(auth)/login');
+            try {
+              await logout();
+            } catch (_) {
+              // tetap lanjut logout meskipun API gagal (misal offline)
+            } finally {
+              router.replace('/(auth)/login');
+            }
           },
         },
       ]
@@ -66,17 +123,14 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-      </View>
-
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
 
         {/* AVATAR */}
         <View style={styles.avatarSection}>
           <Image
-            source={{ uri: 'https://via.placeholder.com/100' }}
+            source={{
+              uri: user?.foto_url ?? 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.name ?? 'U') + '&background=3B466D&color=fff&size=100',
+            }}
             style={styles.avatar}
           />
           <TouchableOpacity style={styles.editButton}>
@@ -91,6 +145,7 @@ const ProfileScreen = () => {
             <TextInput
               style={styles.input}
               value={formData.nama}
+              placeholder="Nama Lengkap"
               onChangeText={(text) => setFormData({ ...formData, nama: text })}
             />
           </View>
@@ -100,6 +155,7 @@ const ProfileScreen = () => {
             <TextInput
               style={styles.input}
               value={formData.phone}
+              placeholder="Nomor WhatsApp"
               onChangeText={(text) => setFormData({ ...formData, phone: text })}
               keyboardType="phone-pad"
             />
@@ -108,18 +164,21 @@ const ProfileScreen = () => {
           <View style={styles.inputWrapper}>
             <Ionicons name="mail-outline" size={20} color="#999" />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: '#999' }]}
               value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
-              keyboardType="email-address"
+              editable={false}
             />
           </View>
 
           <TouchableOpacity
-            style={styles.simpanButton}
-            onPress={() => Alert.alert('Berhasil', 'Profil berhasil disimpan!')}
+            style={[styles.simpanButton, savingProfil && { opacity: 0.7 }]}
+            onPress={handleSimpanProfil}
+            disabled={savingProfil}
           >
-            <Text style={styles.simpanButtonText}>Simpan Perubahan</Text>
+            {savingProfil
+              ? <ActivityIndicator color="#fff" size="small" />
+              : <Text style={styles.simpanButtonText}>Simpan Perubahan</Text>
+            }
           </TouchableOpacity>
         </View>
 
@@ -144,9 +203,36 @@ const ProfileScreen = () => {
 
           {showDropdown.password && (
             <View style={styles.dropdownContent}>
-              <Text style={styles.dropdownText}>Ubah kata sandi Anda</Text>
-              <TouchableOpacity style={styles.subButton}>
-                <Text style={styles.subButtonText}>Ganti Sekarang</Text>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password saat ini"
+                secureTextEntry
+                value={passwordData.current}
+                onChangeText={(t) => setPasswordData({ ...passwordData, current: t })}
+              />
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password baru (min. 6 karakter)"
+                secureTextEntry
+                value={passwordData.new}
+                onChangeText={(t) => setPasswordData({ ...passwordData, new: t })}
+              />
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Konfirmasi password baru"
+                secureTextEntry
+                value={passwordData.confirm}
+                onChangeText={(t) => setPasswordData({ ...passwordData, confirm: t })}
+              />
+              <TouchableOpacity
+                style={[styles.subButton, savingPassword && { opacity: 0.7 }]}
+                onPress={handleGantiPassword}
+                disabled={savingPassword}
+              >
+                {savingPassword
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.subButtonText}>Simpan Password</Text>
+                }
               </TouchableOpacity>
             </View>
           )}
@@ -248,6 +334,7 @@ const styles = StyleSheet.create({
 
   inputWrapper: { flexDirection: 'row', backgroundColor: '#fff', padding: 10, marginBottom: 10, borderRadius: 8 },
   input: { flex: 1, marginLeft: 10 },
+  passwordInput: { backgroundColor: '#F5F5F5', borderRadius: 8, padding: 10, marginBottom: 8, fontSize: 13 },
 
   simpanButton: { backgroundColor: '#FFD700', padding: 12, borderRadius: 8, alignItems: 'center' },
   simpanButtonText: { color: '#fff', fontWeight: '700' },

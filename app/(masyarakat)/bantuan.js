@@ -12,11 +12,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../../context/AuthContext'; // Import AuthContext
 
 const { width } = Dimensions.get('window');
 
 const PusatBantuan = () => {
   const router = useRouter();
+  const { user } = useAuth(); // Ambil data user dari context (terhubung dengan auth database)
 
   const categories = [
     { id: 1, title: 'Cara Melapor', sub: 'Panduan pelaporan', icon: 'bullhorn-variant-outline', color: '#E8EDFF' },
@@ -29,24 +31,11 @@ const PusatBantuan = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#3E4A70" />
 
-      {/* HEADER NAVBAR */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>SIGAP PUPR</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Icon name="magnify" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Icon name="account-circle" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {/* TITLE SECTION */}
         <View style={styles.titleContainer}>
-          <Text style={styles.mainTitle}>Pusat Bantuan</Text>
+          <Text style={styles.mainTitle}>Halo, {user?.name ? user.name.split(' ')[0] : 'Sobat'}</Text>
           <Text style={styles.subTitle}>Apa yang bisa kami bantu hari ini?</Text>
         </View>
 

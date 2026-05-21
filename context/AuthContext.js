@@ -1,55 +1,54 @@
 /**
  * context/AuthContext.js
- * Central authentication context for Sigap-Mobile.
+ * Central authentication context untuk Sigap-Mobile.
  *
  * Manages:
  *   - isAuthenticated  : boolean
  *   - isLoading        : boolean (true while restoring session from AsyncStorage)
  *   - userRole         : 'masyarakat' | 'pegawai' | null
- *   - user             : full user object from Laravel API
+ *   - user             : full user object dari Laravel API
  *
- * The login() function is wired for a real Laravel Sanctum/Passport backend.
- * Replace API_URL with your actual Laravel server address.
+ * ─── MODE ───────────────────────────────────────────────────────────────────
+ * SIMULATION_MODE = true  → pakai data dummy (tidak butuh backend)
+ * SIMULATION_MODE = false → koneksi ke Laravel API sungguhan
+ *
+ * Ganti IP di services/api.js jika testing di device fisik.
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import authService from '../services/authService';
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-// Ganti IP ini dengan IP laptop kamu saat testing di HP fisik.
-// Contoh: 'http://192.168.1.100:8000/api'
-const API_URL = __DEV__
-  ? 'http://192.168.1.100:8000/api'   // ← ganti dengan IP laptop kamu
-  : 'https://api.sigap-pupr.id/api';  // ← URL produksi
+// ─── TOGGLE MODE ──────────────────────────────────────────────────────────────
+// Ubah ke false saat backend Laravel sudah siap
+const SIMULATION_MODE = false;
 
 const STORAGE_KEYS = {
   TOKEN: 'sigap_auth_token',
-  USER:  'sigap_user',
+  USER: 'sigap_user',
 };
 
-// ─── CONTEXT CREATION ─────────────────────────────────────────────────────────
+// ─── CONTEXT ─────────────────────────────────────────────────────────────────
 const AuthContext = createContext(null);
 
 // ─── PROVIDER ─────────────────────────────────────────────────────────────────
 export const AuthProvider = ({ children }) => {
-  const [user,            setUser]            = useState(null);
-  const [userRole,        setUserRole]        = useState(null); // 'masyarakat' | 'pegawai'
+  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading,       setIsLoading]       = useState(true); // true while reading AsyncStorage
+  const [isLoading, setIsLoading] = useState(true);
 
-  // ── Restore session on app launch ─────────────────────────────────────────
+  // ── Restore session dari AsyncStorage ────────────────────────────────────
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const token       = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
-        const storedUser  = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+        const storedUser = await AsyncStorage.getItem(STORAGE_KEYS.USER);
 
-        // Tolak mock tokens (tidak valid untuk sesi persisten)
-        // Mock login sekarang tidak menyimpan ke storage, jadi ini
-        // membersihkan sisa token lama dari versi sebelumnya.
+        // Hapus mock token lama dari versi sebelumnya
         if (token && token.startsWith('mock-token-')) {
           await AsyncStorage.multiRemove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.USER]);
-          return; // Tidak restore sesi, akan redirect ke login
+          return;
         }
 
         if (token && storedUser) {
@@ -69,82 +68,63 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // ── Login ─────────────────────────────────────────────────────────────────
-  /**
-   * Mode simulasi aktif (tidak butuh backend).
-   * Untuk menghubungkan ke Laravel: comment blok mock, uncomment blok fetch di bawah.
-   */
   const login = useCallback(async (credentials) => {
-    // ── SIMULASI (aktif saat API belum siap) ────────────────────────────────
-    // Mock login TIDAK menyimpan ke AsyncStorage supaya setiap reload
-    // selalu mulai dari halaman login (memudahkan testing).
-    // Saat API Laravel siap, gunakan blok fetch di bawah.
-    const mockUser = {
-      id:    1,
-      name:  credentials.username,
-      email: credentials.username + '@sigap.id',
-      role:  'masyarakat', // Ganti ke 'pegawai' untuk tes flow pegawai
-    };
 
-    // Update state saja — tidak persist ke storage
-    setUser(mockUser);
-    setUserRole(mockUser.role);
-    setIsAuthenticated(true);
-    return mockUser;
-
-    // ── API LARAVEL (aktifkan ketika backend sudah siap) ────────────────────
-    /*
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept':       'application/json',
-        },
-        body: JSON.stringify({
-          username: credentials.username,
-          password: credentials.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login gagal. Periksa username dan password.');
-      }
-
-      const { token, user: loggedInUser } = data;
-
-      await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(loggedInUser));
-
-      setUser(loggedInUser);
-      setUserRole(loggedInUser.role); // 'masyarakat' atau 'pegawai'
+    if (SIMULATION_MODE) {
+      // ── SIMULASI: tidak butuh backend ──────────────────────────────────
+      const mockUser = {
+        id: 1,
+        name: credentials.email ?? credentials.username,
+        email: credentials.email ?? credentials.username + '@sigap.id',
+        phone: '08123456789',
+        role: 'masyarakat', // Ganti ke 'pegawai' untuk tes flow pegawai
+      };
+      setUser(mockUser);
+      setUserRole(mockUser.role);
       setIsAuthenticated(true);
-
-      return loggedInUser;
-    } catch (error) {
-      throw error;
+      return mockUser;
     }
-    */
+
+    // ── REAL API: koneksi ke Laravel ───────────────────────────────────────
+    const response = await authService.login(credentials);
+    // response = { user: {...}, token: 'string' }
+
+    const { user: loggedInUser, token } = response;
+
+    // Simpan ke AsyncStorage untuk restore sesi setelah restart
+    await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
+    await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(loggedInUser));
+
+    setUser(loggedInUser);
+    setUserRole(loggedInUser.role); // 'masyarakat' | 'pegawai'
+    setIsAuthenticated(true);
+
+    return loggedInUser;
   }, []);
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
+  // ── Logout ────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
-      // Hapus dari storage (jika ada sesi yang dipersist)
-      await AsyncStorage.multiRemove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.USER]);
-    } catch (e) {
-      console.warn('[AuthContext] Gagal hapus storage saat logout:', e);
+      if (!SIMULATION_MODE) {
+        // Cabut token di server
+        await authService.logout().catch(() => { }); // silent fail jika offline
+      }
     } finally {
-      // Reset semua state auth
+      await AsyncStorage.multiRemove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.USER]);
       setUser(null);
       setUserRole(null);
       setIsAuthenticated(false);
-      // Navigasi ke login ditangani oleh pemanggil (profil.js)
     }
   }, []);
 
-  // ── Get stored token ───────────────────────────────────────────────────────
+  // ── Update user state (dipanggil setelah update profil) ──────────────────
+  const updateUser = useCallback((updatedUser) => {
+    const merged = { ...updatedUser };
+    setUser(merged);
+    AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(merged)).catch(() => { });
+  }, []);
+
+  // ── Get token (untuk dipakai komponen lain jika perlu) ───────────────────
   const getToken = useCallback(async () => {
     return await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
   }, []);
@@ -156,7 +136,9 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     login,
     logout,
+    updateUser,
     getToken,
+    isSimulationMode: SIMULATION_MODE,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

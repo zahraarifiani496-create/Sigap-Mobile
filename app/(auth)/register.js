@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,54 +11,85 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Dimensions
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import authService from '../../services/authService';
 
-const { height } = Dimensions.get('window');
+const HalamanRegister = () => {
+  const router = useRouter();
 
-const HalamanRegister = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
-    // 1. Validasi field kosong
-    if (!fullName || !email || !phone || !password || !confirmPassword) {
+  const handleRegister = async () => {
+    // ── Validasi field kosong ──────────────────────────────────────────────
+    if (!fullName || !username || !email || !phone || !password || !confirmPassword) {
       Alert.alert('Error', 'Silahkan isi semua kolom yang tersedia');
       return;
     }
 
-    // 2. Validasi format email sederhana
+    // ── Validasi format email ──────────────────────────────────────────────
     const emailRegex = /\S+@\S+\.\S+/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Format email tidak valid');
       return;
     }
 
-    // 3. Validasi panjang nomor WhatsApp (Minimal 10 digit)
+    // ── Validasi nomor HP ──────────────────────────────────────────────────
     if (phone.length < 10) {
       Alert.alert('Error', 'Nomor WhatsApp minimal 10 digit');
       return;
     }
 
-    // 4. Validasi kecocokan password
+    // ── Validasi kecocokan password ────────────────────────────────────────
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Konfirmasi kata sandi tidak cocok');
       return;
     }
 
-    // Jika semua validasi lolos, pindah ke HalamanBeranda
-    Alert.alert('Success', 'Registrasi berhasil!', [
-      { 
-        text: 'OK', 
-        onPress: () => router.replace('/(masyarakat)/beranda') 
-      }
-    ]);
+    if (password.length < 6) {
+      Alert.alert('Error', 'Kata sandi minimal 6 karakter');
+      return;
+    }
+
+    // ── Kirim ke API Laravel ───────────────────────────────────────────────
+    setLoading(true);
+    try {
+      const response = await authService.register({
+        name: fullName,
+        username: username,
+        email: email,
+        phone: phone,
+        password: password,
+        passwordConfirmation: confirmPassword,
+      });
+
+      // Registrasi berhasil → arahkan user ke halaman login
+      Alert.alert(
+        '✅ Akun Berhasil Dibuat',
+        'Silakan login dengan email dan password yang telah didaftarkan.',
+        [
+          {
+            text: 'Login Sekarang',
+            onPress: () => router.replace('/(auth)/login'),
+          },
+        ]
+      );
+    } catch (error) {
+      console.log("VALIDATION ERROR:", error.message);
+      Alert.alert("Gagal Daftar", error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,7 +104,7 @@ const HalamanRegister = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.mainContainer}>
-            
+
             {/* Logo Section */}
             <View style={styles.logoContainer}>
               <Image
@@ -92,16 +123,31 @@ const HalamanRegister = ({ navigation }) => {
 
             {/* Form Section */}
             <View style={styles.form}>
-              
-              {/* Nama Pengguna */}
+
+              {/* Nama Lengkap */}
               <View style={styles.inputWrapper}>
                 <FontAwesome name="user" size={20} color="#BFBFBF" style={styles.iconStyle} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Nama Pengguna"
+                  placeholder="Nama Lengkap"
                   placeholderTextColor="#A0A0A0"
                   value={fullName}
                   onChangeText={setFullName}
+                  editable={!loading}
+                />
+              </View>
+
+              {/* Username */}
+              <View style={styles.inputWrapper}>
+                <FontAwesome name="user" size={20} color="#BFBFBF" style={styles.iconStyle} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="#A0A0A0"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  editable={!loading}
                 />
               </View>
 
@@ -116,6 +162,7 @@ const HalamanRegister = ({ navigation }) => {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!loading}
                 />
               </View>
 
@@ -130,6 +177,7 @@ const HalamanRegister = ({ navigation }) => {
                   onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
                   keyboardType="phone-pad"
                   maxLength={13}
+                  editable={!loading}
                 />
               </View>
 
@@ -138,17 +186,18 @@ const HalamanRegister = ({ navigation }) => {
                 <FontAwesome name="lock" size={22} color="#BFBFBF" style={styles.iconStyle} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Kata Sandi"
+                  placeholder="Kata Sandi (min. 6 karakter)"
                   placeholderTextColor="#A0A0A0"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
+                  editable={!loading}
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons 
-                    name={showPassword ? "eye" : "eye-off"} 
-                    size={22} 
-                    color="#BFBFBF" 
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={loading}>
+                  <Ionicons
+                    name={showPassword ? 'eye' : 'eye-off'}
+                    size={22}
+                    color="#BFBFBF"
                   />
                 </TouchableOpacity>
               </View>
@@ -163,36 +212,45 @@ const HalamanRegister = ({ navigation }) => {
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!showConfirmPassword}
+                  editable={!loading}
                 />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Ionicons 
-                    name={showConfirmPassword ? "eye" : "eye-off"} 
-                    size={22} 
-                    color="#BFBFBF" 
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} disabled={loading}>
+                  <Ionicons
+                    name={showConfirmPassword ? 'eye' : 'eye-off'}
+                    size={22}
+                    color="#BFBFBF"
                   />
                 </TouchableOpacity>
               </View>
 
+              {/* Tombol Daftar */}
               <TouchableOpacity
-                style={styles.mainButton}
+                style={[styles.mainButton, loading && styles.mainButtonDisabled]}
                 onPress={handleRegister}
                 activeOpacity={0.8}
+                disabled={loading}
               >
-                <Text style={styles.mainButtonText}>Daftar Sekarang</Text>
+                {loading ? (
+                  <ActivityIndicator color="#3B466D" size="small" />
+                ) : (
+                  <Text style={styles.mainButtonText}>Daftar Sekarang</Text>
+                )}
               </TouchableOpacity>
 
               {/* Link ke Login */}
-              <TouchableOpacity 
-                onPress={() => navigation.navigate('/(auth)/login')}
+              <TouchableOpacity
+                onPress={() => router.push('/(auth)/login')}
                 style={styles.loginLink}
+                disabled={loading}
               >
                 <Text style={styles.loginLinkText}>
-                  Sudah punya akun? <Text style={{fontWeight: 'bold', color: '#3B466D'}}>Masuk di sini</Text>
+                  Sudah punya akun?{' '}
+                  <Text style={{ fontWeight: 'bold', color: '#3B466D' }}>Masuk di sini</Text>
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {/* Spacer bawah untuk scroll */}
+            {/* Spacer bawah */}
             <View style={{ height: 60 }} />
           </View>
         </ScrollView>
@@ -280,6 +338,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     elevation: 3,
   },
+  mainButtonDisabled: {
+    opacity: 0.6,
+  },
   mainButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -292,7 +353,7 @@ const styles = StyleSheet.create({
   loginLinkText: {
     fontSize: 14,
     color: '#666',
-  }
+  },
 });
 
 export default HalamanRegister;

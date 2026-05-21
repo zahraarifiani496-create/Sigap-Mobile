@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,7 +7,8 @@ import {
   SafeAreaView, 
   StyleSheet, 
   Image, 
-  Dimensions 
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { 
   Ionicons, 
@@ -15,56 +16,101 @@ import {
   FontAwesome5, 
   MaterialCommunityIcons 
 } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import laporanService from '../../services/laporanService';
+import MapTilerWebView from '../../components/MapTilerWebView';
 
 const { width } = Dimensions.get('window');
 
-// Tambahkan destructuring { navigation } pada props
-export default function HalamanDetailRiwayat({ navigation }) {
+export default function HalamanDetailRiwayat() {
+  const router = useRouter();
+  const { id } = useLocalSearchParams();
+  const [laporan, setLaporan] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      laporanService.getDetail(id)
+        .then(res => setLaporan(res.data || res))
+        .catch(err => console.log('Error fetch detail:', err))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#3B466D" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!laporan) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>Laporan tidak ditemukan.</Text>
+        <TouchableOpacity style={{ marginTop: 20 }} onPress={() => router.back()}>
+          <Text style={{ color: '#2563EB' }}>Kembali</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  // Helpers untuk UI status
+  const isSelesai = laporan.status_raw === 'selesai';
+  const isProses  = ['diteruskan', 'proses'].includes(laporan.status_raw);
+  const isTolak   = laporan.status_raw === 'ditolak';
+
+  let statusTitle = "Menunggu Verifikasi";
+  let statusDesc  = "Laporan Anda sedang menunggu verifikasi oleh tim.";
+  let statusIcon  = "access-time";
+  let statusColor = "#F59E0B";
+
+  if (isSelesai) {
+    statusTitle = "Selesai Dikerjakan";
+    statusDesc  = "Laporan Anda telah berhasil diverifikasi dan diselesaikan.";
+    statusIcon  = "check-circle";
+    statusColor = "#10B981";
+  } else if (isProses) {
+    statusTitle = "Sedang Diproses";
+    statusDesc  = "Laporan Anda sedang ditangani oleh tim teknis.";
+    statusIcon  = "engineering";
+    statusColor = "#3B82F6";
+  } else if (isTolak) {
+    statusTitle = "Laporan Ditolak";
+    statusDesc  = laporan.catatan || "Laporan tidak memenuhi kriteria verifikasi.";
+    statusIcon  = "cancel";
+    statusColor = "#EF4444";
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* App Bar */}
-      <View style={styles.appBar}>
-        <View style={styles.appBarLeft}>
-          {/* Tambahkan fungsi back */}
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.appBarTitle}>Detail Laporan</Text>
-        </View>
-        <View style={styles.appBarRight}>
-          <TouchableOpacity style={{ marginRight: 15 }}>
-            <Ionicons name="share-social-outline" size={22} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="ellipsis-vertical" size={22} color="white" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* Status & ID Header */}
         <View style={styles.headerCards}>
           <View style={styles.statusMainCard}>
             <View style={styles.checkIconCircle}>
-                <MaterialIcons name="check-circle" size={40} color="#3B466D" />
+                <MaterialIcons name={statusIcon} size={40} color={statusColor} />
             </View>
             <View style={styles.statusContent}>
-              <View style={styles.badgeSelesai}>
-                <Text style={styles.badgeText}>Selesai Dikerjakan</Text>
+              <View style={[styles.badgeSelesai, { backgroundColor: statusColor + '20' }]}>
+                <Text style={[styles.badgeText, { color: statusColor }]}>{laporan.status}</Text>
               </View>
-              <Text style={styles.statusTitle}>Perbaikan Drainase Jalan Protokol</Text>
-              <Text style={styles.statusDesc}>Laporan Anda telah berhasil diverifikasi dan diselesaikan oleh tim teknis PUPR.</Text>
+              <Text style={styles.statusTitle}>{statusTitle}</Text>
+              <Text style={styles.statusDesc}>{statusDesc}</Text>
             </View>
           </View>
 
           <View style={styles.idCard}>
             <Text style={styles.idLabel}>ID LAPORAN</Text>
-            <Text style={styles.idValue}>#PU-2024-8872</Text>
+            <Text style={styles.idValue}>{laporan.kode_laporan}</Text>
             <Text style={[styles.idLabel, { marginTop: 10 }]}>KATEGORI</Text>
             <View style={styles.categoryRow}>
               <Ionicons name="home" size={14} color="#3B466D" />
-              <Text style={styles.categoryText}>Infrastruktur Air & Drainase</Text>
+              <Text style={styles.categoryText}>{laporan.kategori || 'Umum'}</Text>
             </View>
           </View>
         </View>
@@ -75,20 +121,16 @@ export default function HalamanDetailRiwayat({ navigation }) {
             <MaterialIcons name="photo-library" size={18} color="#3B466D" />
             <Text style={styles.sectionTitle}>Dokumentasi</Text>
           </View>
-          <Text style={styles.photoCount}>4 Foto Terlampir</Text>
         </View>
 
         <View style={styles.imageGrid}>
-          <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.mainImage} />
-          <View style={styles.sideImages}>
-            <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.subImage} />
-            <View style={styles.moreImageContainer}>
-              <Image source={{ uri: 'https://via.placeholder.com/150' }} style={styles.subImage} />
-              <View style={styles.imageOverlay}>
-                <Text style={styles.overlayText}>+1</Text>
-              </View>
+          {laporan.foto_url ? (
+            <Image source={{ uri: laporan.foto_url }} style={styles.mainImage} resizeMode="cover" />
+          ) : (
+            <View style={[styles.mainImage, { backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ color: '#94A3B8' }}>Tidak ada foto</Text>
             </View>
-          </View>
+          )}
         </View>
 
         {/* Detail Informasi */}
@@ -101,28 +143,21 @@ export default function HalamanDetailRiwayat({ navigation }) {
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>LOKASI KEJADIAN</Text>
-              <Text style={styles.infoValue}>Jl. Sudirman No. 45, Kebayoran Baru, Jakarta Selatan</Text>
+              <Text style={styles.infoValue}>{laporan.alamat}</Text>
             </View>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>WAKTU PELAPORAN</Text>
-              <Text style={styles.infoValue}>12 Mei 2024, 09:15 WIB</Text>
+              <Text style={styles.infoValue}>{laporan.tanggal || (laporan.created_at ? new Date(laporan.created_at).toLocaleDateString('id-ID') : '-')}</Text>
             </View>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>PELAPOR</Text>
-              <Text style={styles.infoValue}>Aditya Pratama</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>PRIORITAS</Text>
-              <View style={styles.priorityRow}>
-                <View style={[styles.dot, { backgroundColor: 'red' }]} />
-                <Text style={styles.infoValue}>Tinggi</Text>
-              </View>
+              <Text style={styles.infoValue}>{laporan.pelapor?.nama || 'Anda'}</Text>
             </View>
           </View>
 
           <Text style={[styles.infoLabel, { marginTop: 15 }]}>DESKRIPSI MASALAH</Text>
           <Text style={styles.descriptionText}>
-            Saluran drainase tersumbat total akibat tumpukan sedimen dan material sisa konstruksi, menyebabkan genangan setinggi 30cm setiap kali hujan deras.
+            {laporan.deskripsi}
           </Text>
         </View>
 
@@ -130,43 +165,48 @@ export default function HalamanDetailRiwayat({ navigation }) {
         <View style={styles.timelineSection}>
            <View style={styles.sectionTitleRow}>
             <MaterialCommunityIcons name="chart-timeline-variant" size={18} color="#2563EB" />
-            <Text style={styles.sectionTitleBlue}>Aktivitas Laporan</Text>
+            <Text style={styles.sectionTitleBlue}>Status Laporan</Text>
           </View>
 
           {/* Timeline Item 1 */}
           <View style={styles.timelineItem}>
             <View style={styles.timelineLeft}>
-              <View style={[styles.timelineIcon, { backgroundColor: '#3B466D' }]}>
-                <Ionicons name="checkmark" size={14} color="white" />
+              <View style={[styles.timelineIcon, { backgroundColor: statusColor }]}>
+                <Ionicons name={statusIcon === 'access-time' ? 'time' : 'checkmark'} size={14} color="white" />
               </View>
               <View style={styles.timelineLine} />
             </View>
             <View style={styles.timelineRight}>
-              <View style={styles.timelineContentCard}>
+              <View style={[styles.timelineContentCard, { borderLeftColor: statusColor }]}>
                 <View style={styles.timelineHeader}>
-                  <Text style={styles.timelineStatus}>Laporan Selesai</Text>
-                  <Text style={styles.timelineDate}>24 Mei, 14:00</Text>
+                  <Text style={[styles.timelineStatus, { color: statusColor }]}>{laporan.status}</Text>
+                  <Text style={styles.timelineDate}>{laporan.tanggal}</Text>
                 </View>
-                <Text style={styles.timelineDesc}>Pekerjaan pembersihan drainase telah selesai dilakukan.</Text>
-                <TouchableOpacity style={styles.ratingButton}>
-                  <Ionicons name="chatbubble-outline" size={14} color="#2563EB" />
-                  <Text style={styles.ratingText}>Beri penilaian untuk pelayanan ini</Text>
-                </TouchableOpacity>
+                <Text style={styles.timelineDesc}>{statusDesc}</Text>
               </View>
             </View>
           </View>
 
           {/* Map Preview */}
-          <View style={styles.mapContainer}>
-            <Image 
-              source={{ uri: 'https://via.placeholder.com/400x150' }} 
-              style={styles.mapImage} 
-            />
-            <View style={styles.mapOverlay}>
-              <Ionicons name="location" size={20} color="white" />
-              <Text style={styles.mapOverlayText}>Titik Koordinat Terverifikasi</Text>
+          {laporan.latitude && laporan.longitude && (
+            <View style={styles.mapContainer}>
+              <MapTilerWebView
+                latitude={laporan.latitude}
+                longitude={laporan.longitude}
+                zoom={15}
+                interactive={false}
+                markers={[{
+                  latitude: laporan.latitude,
+                  longitude: laporan.longitude,
+                  color: statusColor
+                }]}
+              />
+              <View style={styles.mapOverlay} pointerEvents="none">
+                <Ionicons name="location" size={20} color="white" />
+                <Text style={styles.mapOverlayText}>Titik Koordinat Laporan</Text>
+              </View>
             </View>
-          </View>
+          )}
         </View>
 
       </ScrollView>
@@ -176,7 +216,7 @@ export default function HalamanDetailRiwayat({ navigation }) {
         {/* Tombol diganti menjadi Kembali ke Dashboard */}
         <TouchableOpacity 
           style={styles.btnSecondary} 
-          onPress={() => router.replace('/(masyarakat)/beranda')} // Pastikan nama route sesuai dengan di App.js anda
+          onPress={() => router.replace('/(masyarakat)/riwayat')}
         >
           <Text style={styles.btnTextSecondary}>Kembali ke Dashboard</Text>
         </TouchableOpacity>
