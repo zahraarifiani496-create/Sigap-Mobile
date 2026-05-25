@@ -106,6 +106,29 @@ const laporanService = {
   },
 
   /**
+   * Update status laporan dan foto (Pegawai)
+   * @param {number|string} id
+   * @param {{ status, catatan, foto }} data
+   */
+  updateProgresPegawai: async (id, data) => {
+    const formData = new FormData();
+    formData.append('status', data.status);
+    if (data.catatan) {
+      formData.append('catatan', data.catatan);
+    }
+    
+    if (data.foto) {
+      formData.append('foto', {
+        uri: data.foto.uri,
+        name: data.foto.name ?? 'progres.jpg',
+        type: data.foto.type ?? 'image/jpeg',
+      });
+    }
+
+    return await api.upload(`/laporan/${id}/progres-pegawai`, formData);
+  },
+
+  /**
    * Hapus laporan (hanya bisa jika status masih 'menunggu')
    * @param {number|string} id
    */
@@ -119,6 +142,13 @@ const laporanService = {
   getStatistik: async () => {
     return await api.get('/laporan/statistik');
     // Response: { total, menunggu, diproses, selesai, ditolak }
+  },
+
+  /**
+   * Statistik laporan untuk dashboard khusus pegawai dengan rincian bidang
+   */
+  getStatistikPegawai: async () => {
+    return await api.get('/laporan/statistik/pegawai');
   },
 
   /**

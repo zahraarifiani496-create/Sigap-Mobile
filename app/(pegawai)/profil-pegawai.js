@@ -6,11 +6,13 @@ import {
   View, Text, StyleSheet, SafeAreaView,
   TouchableOpacity, Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { useRouter } from 'expo-router';
 
 export default function ProfilPegawai() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   const handleLogout = () => {
     Alert.alert('Keluar', 'Yakin ingin keluar?', [
@@ -35,12 +37,28 @@ export default function ProfilPegawai() {
           <Text style={styles.logoutText}>Keluar</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(pegawai)/beranda')}>
+          <MaterialIcons name="dashboard" size={24} color={'#757681'} />
+          <Text style={styles.navText}>Dashboard</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(pegawai)/laporan')}>
+          <MaterialIcons name="assignment" size={24} color={'#757681'} />
+          <Text style={styles.navText}>Tugas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
+          <MaterialIcons name="person" size={24} color={'#755700'} />
+          <Text style={styles.navTextActive}>Profil</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFF' },
+  container: { flex: 1, backgroundColor: '#F8FAFF', paddingBottom: 70 },
   header: { backgroundColor: '#1F3B6D', padding: 18 },
   headerTitle: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
   body: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30 },
@@ -53,4 +71,39 @@ const styles = StyleSheet.create({
     paddingVertical: 12, borderRadius: 10,
   },
   logoutText: { color: '#fff', fontWeight: 'bold', marginLeft: 8 },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#c5c6d1',
+  },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  navItemActive: {
+    backgroundColor: '#ffce5d',
+    borderRadius: 12,
+  },
+  navText: {
+    fontSize: 10,
+    color: '#757681',
+    marginTop: 4,
+    fontWeight: 'bold',
+  },
+  navTextActive: {
+    fontSize: 10,
+    color: '#755700',
+    marginTop: 4,
+    fontWeight: 'bold',
+  },
 });

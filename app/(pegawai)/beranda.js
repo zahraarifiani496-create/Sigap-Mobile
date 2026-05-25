@@ -1,7 +1,3 @@
-// app/(pegawai)/beranda.js
-// Dashboard utama untuk Petugas PUPR.
-// Menampilkan statistik laporan masuk, daftar tugas, dan status penanganan.
-
 import React, { useState } from 'react';
 import {
   View,
@@ -11,251 +7,584 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Image,
+  Dimensions,
+  ActivityIndicator,
 } from 'react-native';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import laporanService from '../../services/laporanService';
+import MapTilerWebView from '../../components/MapTilerWebView';
 
-// ─── DATA DUMMY (ganti dengan API call ke Laravel) ────────────────────────────
-const DAFTAR_TUGAS = [
-  {
-    id: 'SIGAP-001',
-    judul: 'Kerusakan Drainase Jl. Sudirman',
-    bidang: 'Sumber Daya Air',
-    status: 'Menunggu',
-    prioritas: 'Tinggi',
-    tanggal: '12 Mei 2026',
-  },
-  {
-    id: 'SIGAP-002',
-    judul: 'Lubang Jalan Flyover Semanggi',
-    bidang: 'Bina Marga',
-    status: 'Diproses',
-    prioritas: 'Tinggi',
-    tanggal: '11 Mei 2026',
-  },
-  {
-    id: 'SIGAP-003',
-    judul: 'PJU Padam Kawasan Menteng',
-    bidang: 'Cipta Karya',
-    status: 'Diproses',
-    prioritas: 'Sedang',
-    tanggal: '10 Mei 2026',
-  },
-  {
-    id: 'SIGAP-004',
-    judul: 'Turap Sungai Retak di Kalideres',
-    bidang: 'Sumber Daya Air',
-    status: 'Selesai',
-    prioritas: 'Tinggi',
-    tanggal: '08 Mei 2026',
-  },
-];
+const { width } = Dimensions.get('window');
 
-const STATUS_COLOR = {
-  Menunggu: { bg: '#FEF3C7', text: '#D97706' },
-  Diproses: { bg: '#DBEAFE', text: '#2563EB' },
-  Selesai:  { bg: '#D1FAE5', text: '#059669' },
-  Ditolak:  { bg: '#FEE2E2', text: '#DC2626' },
-};
+const TUGAS_PRIORITAS = []; // We will use state now
 
-const PRIORITAS_COLOR = {
-  Tinggi: '#EF4444',
-  Sedang: '#F59E0B',
-  Rendah: '#10B981',
-};
-
-// ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function DashboardPegawai() {
   const router = useRouter();
-  const { user, logout } = useAuth();
-  const [activeFilter, setActiveFilter] = useState('Semua');
+  const { user } = useAuth();
+  const [activeFilter, setActiveFilter] = useState('All Fields');
+  const filters = ['All Fields', 'Bina Marga', 'SDA', 'Cipta Karya'];
 
-  const filters = ['Semua', 'Menunggu', 'Diproses', 'Selesai'];
+  const [loading, setLoading] = useState(true);
+  const [statistik, setStatistik] = useState({ total: 0, menunggu: 0, diproses: 0, selesai: 0, ditolak: 0, bidang: { bina_marga: 0, sda: 0, cipta_karya: 0 } });
+  const [laporanList, setLaporanList] = useState([]);
 
-  const filteredTugas =
-    activeFilter === 'Semua'
-      ? DAFTAR_TUGAS
-      : DAFTAR_TUGAS.filter((t) => t.status === activeFilter);
+  React.useEffect(() => {
+    fetchDashboardData();
+  }, [activeFilter]);
 
-  const stats = {
-    total: DAFTAR_TUGAS.length,
-    menunggu: DAFTAR_TUGAS.filter((t) => t.status === 'Menunggu').length,
-    diproses: DAFTAR_TUGAS.filter((t) => t.status === 'Diproses').length,
-    selesai: DAFTAR_TUGAS.filter((t) => t.status === 'Selesai').length,
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const statRes = await laporanService.getStatistikPegawai();
+      setStatistik(statRes);
+
+      const params = { page: 1 };
+      if (activeFilter === 'Bina Marga') params.bidang = 1; // Assuming 1, or better filter locally if API doesn't match ID yet
+      if (activeFilter === 'SDA') params.bidang = 2;
+      if (activeFilter === 'Cipta Karya') params.bidang = 3;
+
+      // For simplicity in UI, we fetch all and filter by category name 
+      // because we might not know the exact IDs, or we can just send the string as `kategori`.
+      const listParams = { page: 1 };
+      if (activeFilter !== 'All Fields') {
+        listParams.kategori = activeFilter === 'SDA' ? 'Sumber Daya Air' : activeFilter;
+      }
+      
+      const res = await laporanService.getDaftarSemua(listParams);
+      setLaporanList(res.data?.slice(0, 3) || []);
+    } catch (error) {
+      console.log('Error fetch pegawai beranda:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Kalkulasi persentase agregat berdasar status
+  // menunggu: 10%, proses: 55%, selesai: 100%
+  const calcPercentage = () => {
+    if (statistik.total === 0) return 0;
+    const totalScore = (statistik.menunggu * 10) + (statistik.diproses * 55) + (statistik.selesai * 100);
+    const overall = totalScore / (statistik.total || 1);
+    return Math.round(overall);
+  };
+  const percentage = calcPercentage();
+
+  // Helper untuk mendapatkan warna bidang
+  const getBidangTheme = (kategori) => {
+    const k = (kategori || '').toLowerCase();
+    if (k.includes('marga')) return { color: '#001e57', bgColor: '#dae2ff', indicator: '#001e57' };
+    if (k.includes('air') || k.includes('sda')) return { color: '#047857', bgColor: '#d1fae5', indicator: '#10b981' };
+    return { color: '#785a00', bgColor: '#ffdf9d', indicator: '#785a00' };
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1F3B6D" />
-
-      {/* ── HEADER ─────────────────────────────────────────────────────── */}
+      <StatusBar barStyle="dark-content" backgroundColor="#f8f9ff" />
+      
+      {/* ── HEADER ── */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerGreeting}>Selamat datang,</Text>
-          <Text style={styles.headerName}>{user?.name ?? 'Petugas PUPR'}</Text>
+        <View style={styles.headerLeft}>
+          <View style={styles.avatar}>
+            <MaterialIcons name="person" size={24} color="#ffffff" />
+          </View>
+          <Text style={styles.headerTitle}>SIGAP PUPR</Text>
         </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutIcon}>
-          <Ionicons name="log-out-outline" size={24} color="#fff" />
+        <TouchableOpacity style={styles.headerBtn}>
+          <MaterialIcons name="notifications" size={24} color="#444650" />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-
-        {/* ── STATS CARDS ────────────────────────────────────────────────── */}
-        <View style={styles.statsRow}>
-          <StatCard label="Total" value={stats.total} color="#1F3B6D" icon="clipboard-list" />
-          <StatCard label="Menunggu" value={stats.menunggu} color="#D97706" icon="clock-outline" />
-          <StatCard label="Diproses" value={stats.diproses} color="#2563EB" icon="progress-wrench" />
-          <StatCard label="Selesai" value={stats.selesai} color="#059669" icon="check-circle-outline" />
+        
+        {/* ── WELCOME GREETING ── */}
+        <View style={styles.welcomeSection}>
+          <Text style={styles.welcomeTitle}>Halo, {user?.name ? user.name.split(' ')[0] : 'Petugas Lapangan'}</Text>
+          <Text style={styles.welcomeSubtitle}>Pantau progres infrastruktur lintas departemen hari ini.</Text>
         </View>
 
-        {/* ── SECTION TITLE ───────────────────────────────────────────────── */}
-        <View style={styles.sectionHeader}>
-          <MaterialCommunityIcons name="format-list-checks" size={20} color="#1F3B6D" />
-          <Text style={styles.sectionTitle}>Daftar Tugas Petugas PUPR</Text>
+        {/* ── STATS BENTO SECTION ── */}
+        <View style={styles.bentoSection}>
+          {/* Main Statistics Card */}
+          <View style={styles.mainStatCard}>
+            <Text style={styles.mainStatLabel}>TOTAL TUGAS AKTIF</Text>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.mainStatValue}>{statistik.total}</Text>}
+            
+            <View style={styles.mainStatGrid}>
+              <View style={styles.subStatBox}>
+                <MaterialIcons name="engineering" size={20} color="#ffce5d" />
+                <Text style={styles.subStatLabel}>Bina Marga</Text>
+                <Text style={styles.subStatValue}>{statistik.bidang?.bina_marga || 0}</Text>
+              </View>
+              <View style={styles.subStatBox}>
+                <MaterialIcons name="water-drop" size={20} color="#93c5fd" />
+                <Text style={styles.subStatLabel}>SDA</Text>
+                <Text style={styles.subStatValue}>{statistik.bidang?.sda || 0}</Text>
+              </View>
+              <View style={styles.subStatBox}>
+                <MaterialIcons name="apartment" size={20} color="#86efac" />
+                <Text style={styles.subStatLabel}>Cipta Karya</Text>
+                <Text style={styles.subStatValue}>{statistik.bidang?.cipta_karya || 0}</Text>
+              </View>
+            </View>
+            
+            {/* Abstract BG Decor (simulated) */}
+            <View style={[styles.glowCircle, { right: -50, top: -50, backgroundColor: 'rgba(255, 206, 93, 0.15)' }]} />
+            <View style={[styles.glowCircle, { left: -50, bottom: -50, backgroundColor: 'rgba(96, 165, 250, 0.15)' }]} />
+          </View>
+
+          {/* Percentage Card */}
+          <View style={styles.percentCard}>
+            <View style={styles.percentLeft}>
+              <View style={styles.percentIconBox}>
+                <MaterialIcons name="trending-up" size={28} color="#785a00" />
+              </View>
+              <View style={{ marginLeft: 16 }}>
+                <View style={styles.percentRow}>
+                  <Text style={styles.percentValueText}>{percentage}%</Text>
+                </View>
+                <Text style={styles.percentDesc}>Penyelesaian Lintas Sektor</Text>
+              </View>
+            </View>
+            {/* Circle Progress Indicator */}
+            <View style={styles.circleProgressWrapper}>
+              <View style={styles.circleProgressInner}>
+                 <Text style={styles.circleProgressText}>{percentage}%</Text>
+              </View>
+            </View>
+          </View>
         </View>
 
-        {/* ── FILTER CHIPS ────────────────────────────────────────────────── */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
-          {filters.map((f) => (
-            <TouchableOpacity
-              key={f}
-              style={[styles.filterChip, activeFilter === f && styles.filterChipActive]}
+        {/* ── FILTERS ── */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
+          {filters.map((f, i) => (
+            <TouchableOpacity 
+              key={i} 
+              style={[styles.filterBtn, activeFilter === f ? styles.filterBtnActive : styles.filterBtnInactive]}
               onPress={() => setActiveFilter(f)}
             >
-              <Text style={[styles.filterChipText, activeFilter === f && styles.filterChipTextActive]}>
+              <Text style={[styles.filterBtnText, activeFilter === f ? styles.filterBtnTextActive : styles.filterBtnTextInactive]}>
                 {f}
               </Text>
             </TouchableOpacity>
           ))}
+          <View style={{ width: 20 }} />
         </ScrollView>
 
-        {/* ── TUGAS LIST ──────────────────────────────────────────────────── */}
-        {filteredTugas.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.tugasCard}
-            onPress={() => router.push('/(pegawai)/laporan')}
-            activeOpacity={0.85}
-          >
-            <View style={styles.tugasTop}>
-              <View style={styles.idBadge}>
-                <Text style={styles.idText}>{item.id}</Text>
-              </View>
-              <View style={[styles.statusBadge, { backgroundColor: STATUS_COLOR[item.status]?.bg }]}>
-                <Text style={[styles.statusText, { color: STATUS_COLOR[item.status]?.text }]}>
-                  {item.status}
-                </Text>
-              </View>
-            </View>
+        {/* ── PRIORITY LIST ── */}
+        <View style={styles.prioritySection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Daftar Prioritas</Text>
+            <TouchableOpacity>
+              <Text style={styles.linkText}>Lihat Semua</Text>
+            </TouchableOpacity>
+          </View>
 
-            <Text style={styles.tugasJudul} numberOfLines={2}>{item.judul}</Text>
+          {loading ? (
+            <ActivityIndicator color="#001e57" style={{ marginTop: 20 }} />
+          ) : laporanList.length === 0 ? (
+            <Text style={{ textAlign: 'center', marginTop: 20, color: '#444650' }}>Belum ada daftar prioritas.</Text>
+          ) : (
+            laporanList.map(item => {
+              const theme = getBidangTheme(item.kategori);
+              const isUrgent = item.status_raw === 'pending' || item.status_raw === 'menunggu';
+              return (
+                <TouchableOpacity key={item.id} style={styles.taskCard} onPress={() => router.push({ pathname: '/(pegawai)/detail-laporan', params: { id: item.id } })}>
+                  <View style={[styles.taskIndicator, { backgroundColor: theme.indicator }]} />
+                  <View style={styles.taskContent}>
+                    <Image source={{ uri: item.foto_url || 'https://images.unsplash.com/photo-1541888087525-4bd40ed19375?auto=format&fit=crop&w=300&q=80' }} style={styles.taskImage} />
+                    <View style={styles.taskInfo}>
+                      <View style={[styles.tagBadge, { backgroundColor: theme.bgColor }]}>
+                        <Text style={[styles.tagText, { color: theme.color }]}>{item.kategori || 'UMUM'}</Text>
+                      </View>
+                      <Text style={styles.taskTitle} numberOfLines={1}>{item.judul}</Text>
+                      
+                      <View style={styles.taskMetaRow}>
+                        <View style={styles.metaItem}>
+                          <MaterialIcons name="location-on" size={14} color="#444650" />
+                          <Text style={styles.metaText} numberOfLines={1}>{item.alamat || 'Lokasi tidak diketahui'}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                          <MaterialIcons name={isUrgent ? 'priority-high' : 'schedule'} size={14} color={isUrgent ? '#ba1a1a' : '#444650'} />
+                          <Text style={[styles.metaText, isUrgent && { color: '#ba1a1a' }]}>{item.status}</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <TouchableOpacity style={styles.moreBtn}>
+                      <MaterialIcons name="more-vert" size={24} color="#444650" />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              )
+            })
+          )}
+        </View>
 
-            <View style={styles.tugasMeta}>
-              <View style={styles.metaItem}>
-                <MaterialCommunityIcons name="office-building-outline" size={13} color="#64748B" />
-                <Text style={styles.metaText}>{item.bidang}</Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Ionicons name="calendar-outline" size={13} color="#64748B" />
-                <Text style={styles.metaText}>{item.tanggal}</Text>
-              </View>
-            </View>
+        {/* ── MAP SECTION ── */}
+        <View style={styles.mapSection}>
+          <Text style={styles.sectionTitle}>Peta Wilayah Kerja</Text>
+          <View style={styles.mapWrapper}>
+            <MapTilerWebView 
+              latitude={-6.200000}
+              longitude={106.816666}
+              zoom={11}
+              style={{ width: '100%', height: '100%' }}
+              interactive={true}
+              markers={laporanList.filter(l => l.latitude && l.longitude).map(l => ({ latitude: l.latitude, longitude: l.longitude }))}
+            />
+          </View>
+        </View>
 
-            <View style={styles.tugasFooter}>
-              <View style={[styles.prioritasDot, { backgroundColor: PRIORITAS_COLOR[item.prioritas] }]} />
-              <Text style={styles.prioritasText}>Prioritas {item.prioritas}</Text>
-              <Text style={styles.detailLink}>Lihat Detail →</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-
-        <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── SUB-COMPONENT: Stat Card ─────────────────────────────────────────────────
-const StatCard = ({ label, value, color, icon }) => (
-  <View style={[styles.statCard, { borderTopColor: color }]}>
-    <MaterialCommunityIcons name={icon} size={20} color={color} />
-    <Text style={[styles.statValue, { color }]}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
-// ─── STYLES ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFF' },
-
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9ff',
+  },
   header: {
-    backgroundColor: '#1F3B6D',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    height: 64,
+    backgroundColor: '#f8f9ff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#c5c6d1',
   },
-  headerGreeting: { color: '#A0BFE0', fontSize: 12 },
-  headerName: { color: '#fff', fontWeight: 'bold', fontSize: 18, marginTop: 2 },
-  logoutIcon: { padding: 6 },
-
-  scroll: { padding: 16, paddingBottom: 100 },
-
-  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#001e57',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#001e57',
+  },
+  headerBtn: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  scroll: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  welcomeSection: {
+    marginBottom: 24,
+  },
+  welcomeTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0b1c30',
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#444650',
+    marginTop: 4,
+  },
+  bentoSection: {
+    marginBottom: 24,
+  },
+  mainStatCard: {
+    backgroundColor: '#1d356e',
+    borderRadius: 12,
+    padding: 24,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  mainStatLabel: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+    opacity: 0.8,
+    letterSpacing: 0.5,
+  },
+  mainStatValue: {
+    fontSize: 56,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  mainStatGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  subStatBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    flex: 1,
     marginHorizontal: 4,
-    borderTopWidth: 3,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  subStatLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  subStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginTop: 2,
+  },
+  glowCircle: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    zIndex: 0,
+  },
+  percentCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#c5c6d1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
     elevation: 2,
   },
-  statValue: { fontSize: 20, fontWeight: 'bold', marginTop: 6 },
-  statLabel: { fontSize: 9, color: '#64748B', marginTop: 2, fontWeight: '600' },
-
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 15, fontWeight: 'bold', color: '#1F3B6D', marginLeft: 8 },
-
-  filterRow: { marginBottom: 16 },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+  percentLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  percentIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 206, 93, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  percentRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  percentValueText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0b1c30',
+  },
+  percentBadge: {
+    backgroundColor: '#d1fae5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  percentBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#047857',
+  },
+  percentDesc: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#444650',
+    marginTop: 2,
+  },
+  circleProgressWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 4,
+    borderColor: '#f4c454',
+    borderLeftColor: '#e2e8f0', // fake partial progress ring
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '45deg' }],
+  },
+  circleProgressInner: {
+    transform: [{ rotate: '-45deg' }],
+  },
+  circleProgressText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#785a00',
+  },
+  filterContainer: {
+    marginBottom: 24,
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+  },
+  filterBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#E2E8F0',
     marginRight: 8,
   },
-  filterChipActive: { backgroundColor: '#1F3B6D' },
-  filterChipText: { fontSize: 12, color: '#64748B', fontWeight: '600' },
-  filterChipTextActive: { color: '#fff' },
-
-  tugasCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
+  filterBtnActive: {
+    backgroundColor: '#ffce5d',
   },
-  tugasTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  idBadge: { backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  idText: { fontSize: 10, color: '#2563EB', fontWeight: '700' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
-  statusText: { fontSize: 10, fontWeight: '700' },
-
-  tugasJudul: { fontSize: 14, fontWeight: 'bold', color: '#1E293B', marginBottom: 10, lineHeight: 20 },
-
-  tugasMeta: { flexDirection: 'row', gap: 16, marginBottom: 10 },
-  metaItem: { flexDirection: 'row', alignItems: 'center' },
-  metaText: { fontSize: 11, color: '#64748B', marginLeft: 4 },
-
-  tugasFooter: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 8 },
-  prioritasDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  prioritasText: { fontSize: 11, color: '#64748B', flex: 1 },
-  detailLink: { fontSize: 11, color: '#1F3B6D', fontWeight: '700' },
+  filterBtnInactive: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#c5c6d1',
+  },
+  filterBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterBtnTextActive: {
+    color: '#755700',
+  },
+  filterBtnTextInactive: {
+    color: '#444650',
+  },
+  prioritySection: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0b1c30',
+  },
+  linkText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#001e57',
+  },
+  taskCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#c5c6d1',
+    marginBottom: 12,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  taskIndicator: {
+    width: 6,
+  },
+  taskContent: {
+    flex: 1,
+    flexDirection: 'row',
+    padding: 16,
+    gap: 16,
+  },
+  taskImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#eff4ff',
+  },
+  taskInfo: {
+    flex: 1,
+  },
+  tagBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  tagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  taskTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0b1c30',
+    marginBottom: 8,
+  },
+  taskMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#444650',
+  },
+  moreBtn: {
+    padding: 4,
+    alignSelf: 'flex-start',
+    marginRight: -8,
+    marginTop: -8,
+  },
+  mapSection: {
+    marginBottom: 16,
+  },
+  mapWrapper: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#e5e7eb',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#c5c6d1',
+  },
+  mapPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 24,
+    paddingTop: 40,
+    justifyContent: 'flex-end',
+  },
+  mapBtn: {
+    backgroundColor: '#ffce5d',
+    flexDirection: 'row',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapBtnText: {
+    color: '#755700',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });
