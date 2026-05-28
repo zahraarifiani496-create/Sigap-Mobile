@@ -68,20 +68,6 @@ export default function DaftarKerjaScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
-      {/* Top App Bar */}
-      <View style={styles.topAppBar}>
-        <View style={styles.headerLeft}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=100&q=80' }} 
-            style={styles.profilePic} 
-          />
-          <Text style={styles.headerTitle}>SIGAP PUPR</Text>
-        </View>
-        <TouchableOpacity style={styles.iconButton}>
-          <MaterialIcons name="notifications" size={24} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {/* Page Title & Actions */}
@@ -260,22 +246,6 @@ export default function DaftarKerjaScreen() {
         <MaterialIcons name="add" size={32} color="#fff" />
       </TouchableOpacity>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(pegawai)/beranda')}>
-          <MaterialIcons name="dashboard" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Dashboard</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.navItem, styles.navItemActive]}>
-          <MaterialIcons name="assignment" size={24} color={colors.onSecondaryContainer} />
-          <Text style={styles.navTextActive}>Tugas</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(pegawai)/profil-pegawai')}>
-          <MaterialIcons name="person" size={24} color={colors.onSurfaceVariant} />
-          <Text style={styles.navText}>Profil</Text>
-        </TouchableOpacity>
-      </View>
-
     </SafeAreaView>
   );
 }
@@ -285,47 +255,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  topAppBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    height: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 },
-      android: { elevation: 2 },
-    }),
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profilePic: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    marginRight: 10,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100, // Ruang buat FAB & Bottom Nav
+    paddingBottom: 100,
   },
   pageHeader: {
     marginBottom: 20,
@@ -741,7 +673,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 40,
     right: 20,
     width: 56,
     height: 56,
@@ -749,45 +681,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: colors.surface,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
-  },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-  },
-  navItemActive: {
-    backgroundColor: colors.secondaryContainer,
-    borderRadius: 12,
-  },
-  navText: {
-    fontSize: 10,
-    color: colors.onSurfaceVariant,
-    marginTop: 4,
-    fontWeight: 'bold',
-  },
-  navTextActive: {
-    fontSize: 10,
-    color: colors.onSecondaryContainer,
-    marginTop: 4,
-    fontWeight: 'bold',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
+      android: { elevation: 6 },
+    }),
   },
 });

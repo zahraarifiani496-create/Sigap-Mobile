@@ -84,23 +84,10 @@ export default function DashboardPegawai() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9ff" />
       
-      {/* ── HEADER ── */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.avatar}>
-            <MaterialIcons name="person" size={24} color="#ffffff" />
-          </View>
-          <Text style={styles.headerTitle}>SIGAP PUPR</Text>
-        </View>
-        <TouchableOpacity style={styles.headerBtn}>
-          <MaterialIcons name="notifications" size={24} color="#444650" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
-        {/* ── WELCOME GREETING ── */}
-        <View style={styles.welcomeSection}>
+        {/* ── HEADER HALAMAN ── */}
+        <View style={styles.header}>
           <Text style={styles.welcomeTitle}>Halo, {user?.name ? user.name.split(' ')[0] : 'Petugas Lapangan'}</Text>
           <Text style={styles.welcomeSubtitle}>Pantau progres infrastruktur lintas departemen hari ini.</Text>
         </View>
@@ -248,40 +235,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9ff',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    height: 64,
-    backgroundColor: '#f8f9ff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#c5c6d1',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#001e57',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#001e57',
-  },
-  headerBtn: {
-    padding: 8,
-    borderRadius: 20,
-  },
-  scroll: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   welcomeSection: {
     marginBottom: 24,

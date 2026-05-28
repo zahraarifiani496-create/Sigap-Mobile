@@ -75,19 +75,6 @@ export default function DetailTugasScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
-      {/* Top App Bar */}
-      <View style={styles.topAppBar}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
-            <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Detail Tugas</Text>
-        </View>
-        <View style={styles.profilePicContainer}>
-          <MaterialIcons name="person" size={24} color={colors.primary} style={{ alignSelf: 'center', marginTop: 5 }} />
-        </View>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {/* Task Header Card */}
@@ -198,22 +185,6 @@ export default function DetailTugasScreen() {
 
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(pegawai)/beranda')}>
-          <MaterialIcons name="dashboard" size={24} color={colors.outline} />
-          <Text style={styles.navText}>Dashboard</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.navItem, styles.navItemActive]} onPress={() => router.push('/(pegawai)/laporan')}>
-          <MaterialIcons name="assignment" size={24} color={colors.onSecondaryContainer} />
-          <Text style={styles.navTextActive}>Tugas</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/(pegawai)/profil-pegawai')}>
-          <MaterialIcons name="person" size={24} color={colors.outline} />
-          <Text style={styles.navText}>Profil</Text>
-        </TouchableOpacity>
-      </View>
-
     </SafeAreaView>
   );
 }
@@ -223,53 +194,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  topAppBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    height: 60,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 },
-      android: { elevation: 2 },
-    }),
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: -10,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  profilePicContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: colors.primaryFixedDim,
-    overflow: 'hidden',
-  },
-  profilePic: {
-    width: '100%',
-    height: '100%',
-  },
   scrollContent: {
     padding: 20,
-    paddingBottom: 120, // Ruang buat Bottom Nav
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: colors.surface,
@@ -462,40 +389,5 @@ const styles = StyleSheet.create({
     color: colors.outline,
     fontWeight: '600',
     paddingHorizontal: 20,
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: colors.surface,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant,
-  },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-  },
-  navItemActive: {
-    backgroundColor: colors.secondaryContainer,
-    borderRadius: 12,
-  },
-  navText: {
-    fontSize: 10,
-    color: colors.outline,
-    marginTop: 4,
-    fontWeight: 'bold',
-  },
-  navTextActive: {
-    fontSize: 10,
-    color: colors.onSecondaryContainer,
-    marginTop: 4,
-    fontWeight: 'bold',
   },
 });
