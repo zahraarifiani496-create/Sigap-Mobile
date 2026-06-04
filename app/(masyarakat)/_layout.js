@@ -6,7 +6,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Ionicons, MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function CustomHeader({ route, options, navigation }) {
@@ -87,7 +87,7 @@ export default function MasyarakatLayout() {
           title: 'LAPORAN',
           headerTitle: 'Buat Laporan',
           tabBarIcon: ({ color }) => (
-            <AntDesign name="pluscircleo" size={24} color={color} />
+            <MaterialCommunityIcons name="plus-circle-outline" size={24} color={color} />
           ),
         }}
       />
@@ -97,7 +97,7 @@ export default function MasyarakatLayout() {
           title: 'BANTUAN',
           headerTitle: 'Pusat Bantuan',
           tabBarIcon: ({ color }) => (
-            <AntDesign name="questioncircleo" size={24} color={color} />
+            <MaterialCommunityIcons name="help-circle-outline" size={24} color={color} />
           ),
         }}
       />
@@ -107,7 +107,7 @@ export default function MasyarakatLayout() {
           title: 'PROFILE',
           headerTitle: 'Profile',
           tabBarIcon: ({ color }) => (
-            <AntDesign name="user" size={24} color={color} />
+            <MaterialCommunityIcons name="account-outline" size={24} color={color} />
           ),
         }}
       />

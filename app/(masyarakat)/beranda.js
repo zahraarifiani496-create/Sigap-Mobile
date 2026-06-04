@@ -52,7 +52,6 @@ const HalamanBeranda = () => {
   const [laporanList, setLaporanList] = useState([]); // semua laporan user
   const [hasilKerja, setHasilKerja] = useState([]); // laporan selesai dengan foto
   const [loading, setLoading] = useState(true);
-  const [mapScrollEnabled, setMapScrollEnabled] = useState(true);
 
   // Koordinat default (jika tidak ada laporan dengan GPS)
   const [mapRegion, setMapRegion] = useState({
@@ -113,16 +112,14 @@ const HalamanBeranda = () => {
 
   // 5 laporan terbaru untuk STATUS PROYEK
   const laporanTerbaru = laporanList.slice(0, 5);
-  
+  console.log("Koordinat Region:", mapRegion)
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1F3B6D" />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        scrollEnabled={mapScrollEnabled}
-      >
+
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* ── BANNER SELAMAT DATANG ── */}
         <View style={styles.welcomeSection}>
@@ -140,28 +137,29 @@ const HalamanBeranda = () => {
           </TouchableOpacity>
         </View>
 
-
-        {/* ── PETA INFRASTRUKTUR — WebView Leaflet (Expo Go compatible) ── */}
+        {/* ── PETA INFRASTRUKTUR — hanya tampil di mobile ── */}
         {Platform.OS !== 'web' && (
           <View style={styles.mapContainer}>
             <MapTilerWebView
               latitude={mapRegion.latitude}
               longitude={mapRegion.longitude}
-              zoom={12}
+              zoom={11}
               style={styles.mapView}
-              showUserLocation
               interactive={true}
-              onScrollToggle={setMapScrollEnabled}
               markers={laporanList
-                .filter(l => parseFloat(l.latitude) && parseFloat(l.longitude))
-                .map(l => ({
-                  latitude:    parseFloat(l.latitude),
-                  longitude:   parseFloat(l.longitude),
-                  title:       l.kode_laporan,
-                  description: l.judul,
-                  color:       markerColor(l.status_raw),
-                }))
-              }
+                .map((l) => {
+                  const lat = parseFloat(l.latitude);
+                  const lng = parseFloat(l.longitude);
+                  if (!lat || !lng || lat === 0 || lng === 0) return null;
+                  return {
+                    latitude: lat,
+                    longitude: lng,
+                    title: l.kode_laporan,
+                    description: l.judul,
+                    color: markerColor(l.status_raw),
+                  };
+                })
+                .filter(Boolean)}
             />
 
             {/* Label overlay */}

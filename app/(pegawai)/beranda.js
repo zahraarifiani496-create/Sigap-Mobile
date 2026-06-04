@@ -10,11 +10,13 @@ import {
   Image,
   Dimensions,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import laporanService from '../../services/laporanService';
+import penugasanService from '../../services/penugasanService';
 import MapTilerWebView from '../../components/MapTilerWebView';
 
 const { width } = Dimensions.get('window');
@@ -24,10 +26,11 @@ const TUGAS_PRIORITAS = []; // We will use state now
 export default function DashboardPegawai() {
   const router = useRouter();
   const { user } = useAuth();
-  const [activeFilter, setActiveFilter] = useState('All Fields');
-  const filters = ['All Fields', 'Bina Marga', 'SDA', 'Cipta Karya'];
+  const [activeFilter, setActiveFilter] = useState('Semua Bidang');
+  const filters = ['Semua Bidang', 'Jalan', 'Jembatan', 'Sumber Daya Air (SDA)', 'Cipta Karya', 'Tata Ruang'];
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [statistik, setStatistik] = useState({ total: 0, menunggu: 0, diproses: 0, selesai: 0, ditolak: 0, bidang: { bina_marga: 0, sda: 0, cipta_karya: 0 } });
   const [laporanList, setLaporanList] = useState([]);
 
@@ -35,56 +38,94 @@ export default function DashboardPegawai() {
     fetchDashboardData();
   }, [activeFilter]);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchDashboardData = async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     try {
+      // Statistik laporan dari server (total, menunggu, diproses, selesai)
       const statRes = await laporanService.getStatistikPegawai();
       setStatistik(statRes);
 
-      const params = { page: 1 };
-      if (activeFilter === 'Bina Marga') params.bidang = 1; // Assuming 1, or better filter locally if API doesn't match ID yet
-      if (activeFilter === 'SDA') params.bidang = 2;
-      if (activeFilter === 'Cipta Karya') params.bidang = 3;
+      // ── Ganti getDaftarSemua → getDaftarTugas ──────────────────────────
+      // Endpoint baru: GET /api/pekerja/tugas  (hanya tugas milik pekerja ini)
+      // Response shape: { success, data: [ { id, status_tugas, laporan: {...}, ... } ] }
+      const tugasParams = { per_page: 20 };
+      const res = await penugasanService.getDaftarTugas(tugasParams);
 
-      // For simplicity in UI, we fetch all and filter by category name 
-      // because we might not know the exact IDs, or we can just send the string as `kategori`.
-      const listParams = { page: 1 };
-      if (activeFilter !== 'All Fields') {
-        listParams.kategori = activeFilter === 'SDA' ? 'Sumber Daya Air' : activeFilter;
-      }
-      
-      const res = await laporanService.getDaftarSemua(listParams);
-      setLaporanList(res.data?.slice(0, 3) || []);
+      // Petakan data penugasan ke format yang dipakai kartu beranda.
+      // Field utama ada di dalam objek 'laporan' (nested), bukan di root.
+      const mapped = (res.data ?? []).map(tugas => {
+        const lap = tugas.laporan ?? {};
+        return {
+          // ID penugasan (dipakai untuk navigasi ke detail)
+          id:          tugas.id,
+          id_laporan:  lap.id,
+
+          // Konten kartu
+          judul:       lap.judul    ?? lap.deskripsi ?? 'Tidak ada judul',
+          kategori:    lap.kategori ?? 'Umum',
+          alamat:      lap.alamat   ?? 'Lokasi tidak diketahui',
+          foto_url:    lap.foto_url ?? null,
+
+          // Koordinat untuk peta
+          latitude:    lap.koordinat?.latitude  ?? null,
+          longitude:   lap.koordinat?.longitude ?? null,
+
+          // Status tugas pekerja (bukan status laporan)
+          status_raw:  tugas.status_tugas,
+          status:      tugas.label_status ?? tugas.status_tugas,
+        };
+      });
+
+      setLaporanList(mapped);
     } catch (error) {
-      console.log('Error fetch pegawai beranda:', error);
+      console.log('Error fetch pegawai beranda:', error.message);
     } finally {
-      setLoading(false);
+      if (!isRefresh) setLoading(false);
     }
   };
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchDashboardData(true);
+    setRefreshing(false);
+  }, [activeFilter]);
 
   // Kalkulasi persentase agregat berdasar status
   // menunggu: 10%, proses: 55%, selesai: 100%
   const calcPercentage = () => {
-    if (statistik.total === 0) return 0;
-    const totalScore = (statistik.menunggu * 10) + (statistik.diproses * 55) + (statistik.selesai * 100);
-    const overall = totalScore / (statistik.total || 1);
+    const totalTasks = (statistik.menunggu || 0) + (statistik.diproses || 0) + (statistik.selesai || 0) + (statistik.terkendala || 0);
+    if (totalTasks === 0) return 0;
+    const totalScore = ((statistik.menunggu || 0) * 10) + ((statistik.diproses || 0) * 55) + ((statistik.selesai || 0) * 100) + ((statistik.terkendala || 0) * 30);
+    const overall = totalScore / totalTasks;
     return Math.round(overall);
   };
   const percentage = calcPercentage();
 
+  const filteredLaporanList = laporanList.filter(item => {
+    if (activeFilter === 'Semua Bidang' || activeFilter === 'All Fields') return true;
+    return (item.kategori || '').toLowerCase() === activeFilter.toLowerCase();
+  });
+
   // Helper untuk mendapatkan warna bidang
   const getBidangTheme = (kategori) => {
     const k = (kategori || '').toLowerCase();
-    if (k.includes('marga')) return { color: '#001e57', bgColor: '#dae2ff', indicator: '#001e57' };
+    if (k.includes('marga') || k.includes('jalan') || k.includes('jembatan')) return { color: '#001e57', bgColor: '#dae2ff', indicator: '#001e57' };
     if (k.includes('air') || k.includes('sda')) return { color: '#047857', bgColor: '#d1fae5', indicator: '#10b981' };
-    return { color: '#785a00', bgColor: '#ffdf9d', indicator: '#785a00' };
+    if (k.includes('cipta') || k.includes('tata')) return { color: '#785a00', bgColor: '#ffdf9d', indicator: '#785a00' };
+    return { color: '#444650', bgColor: '#e2e8f0', indicator: '#444650' };
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9ff" />
       
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#001e57']} />
+        }
+      >
         
         {/* ── HEADER HALAMAN ── */}
         <View style={styles.header}>
@@ -121,27 +162,6 @@ export default function DashboardPegawai() {
             <View style={[styles.glowCircle, { right: -50, top: -50, backgroundColor: 'rgba(255, 206, 93, 0.15)' }]} />
             <View style={[styles.glowCircle, { left: -50, bottom: -50, backgroundColor: 'rgba(96, 165, 250, 0.15)' }]} />
           </View>
-
-          {/* Percentage Card */}
-          <View style={styles.percentCard}>
-            <View style={styles.percentLeft}>
-              <View style={styles.percentIconBox}>
-                <MaterialIcons name="trending-up" size={28} color="#785a00" />
-              </View>
-              <View style={{ marginLeft: 16 }}>
-                <View style={styles.percentRow}>
-                  <Text style={styles.percentValueText}>{percentage}%</Text>
-                </View>
-                <Text style={styles.percentDesc}>Penyelesaian Lintas Sektor</Text>
-              </View>
-            </View>
-            {/* Circle Progress Indicator */}
-            <View style={styles.circleProgressWrapper}>
-              <View style={styles.circleProgressInner}>
-                 <Text style={styles.circleProgressText}>{percentage}%</Text>
-              </View>
-            </View>
-          </View>
         </View>
 
         {/* ── FILTERS ── */}
@@ -171,12 +191,12 @@ export default function DashboardPegawai() {
 
           {loading ? (
             <ActivityIndicator color="#001e57" style={{ marginTop: 20 }} />
-          ) : laporanList.length === 0 ? (
+          ) : filteredLaporanList.length === 0 ? (
             <Text style={{ textAlign: 'center', marginTop: 20, color: '#444650' }}>Belum ada daftar prioritas.</Text>
           ) : (
-            laporanList.map(item => {
+            filteredLaporanList.slice(0, 3).map(item => {
               const theme = getBidangTheme(item.kategori);
-              const isUrgent = item.status_raw === 'pending' || item.status_raw === 'menunggu';
+              const isUrgent = item.status_raw === 'ditugaskan' || item.status_raw === 'revisi' || item.status_raw === 'terkendala';
               return (
                 <TouchableOpacity key={item.id} style={styles.taskCard} onPress={() => router.push({ pathname: '/(pegawai)/detail-laporan', params: { id: item.id } })}>
                   <View style={[styles.taskIndicator, { backgroundColor: theme.indicator }]} />
@@ -214,12 +234,12 @@ export default function DashboardPegawai() {
           <Text style={styles.sectionTitle}>Peta Wilayah Kerja</Text>
           <View style={styles.mapWrapper}>
             <MapTilerWebView 
-              latitude={-6.200000}
-              longitude={106.816666}
+              latitude={-6.57139}
+              longitude={107.76139}
               zoom={11}
               style={{ width: '100%', height: '100%' }}
               interactive={true}
-              markers={laporanList.filter(l => l.latitude && l.longitude).map(l => ({ latitude: l.latitude, longitude: l.longitude }))}
+              markers={filteredLaporanList.filter(l => l.latitude && l.longitude).map(l => ({ latitude: l.latitude, longitude: l.longitude }))}
             />
           </View>
         </View>

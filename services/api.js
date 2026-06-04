@@ -18,17 +18,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Contoh: '192.168.1.105'
 
 export const BASE_URL = __DEV__
-  ? `https://lkbfwamszr.sharedwithexpose.com/api`
+  ? `https://x8phor8dee.sharedwithexpose.com/api`
   : 'https://api.sigap-pupr.id/api';
 
 const TIMEOUT_MS = 15000; // 15 detik
 
-// ─── HELPER: Ambil token dari storage ────────────────────────────────────────
+// ─── HELPER: Ambil token dari storage 
 const getToken = async () => {
   return await AsyncStorage.getItem('sigap_auth_token');
 };
 
-// ─── HELPER: Buat headers standard ───────────────────────────────────────────
+// ─── HELPER: Buat headers standard 
 const buildHeaders = async (isMultipart = false) => {
   const token = await getToken();
   const headers = {
@@ -46,7 +46,7 @@ const buildHeaders = async (isMultipart = false) => {
   return headers;
 };
 
-// ─── HELPER: Timeout wrapper ──────────────────────────────────────────────────
+// ─── HELPER: Timeout wrapper 
 const withTimeout = (promise, ms = TIMEOUT_MS) => {
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Request timeout. Periksa koneksi internet.')), ms)
