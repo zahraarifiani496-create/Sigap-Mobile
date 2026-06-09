@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Contoh: '192.168.1.105'
 
 export const BASE_URL = __DEV__
-  ? `https://x8phor8dee.sharedwithexpose.com/api`
+  ? `https://sigap-web-production-8e80.up.railway.app/api`
   : 'https://api.sigap-pupr.id/api';
 
 const TIMEOUT_MS = 15000; // 15 detik
