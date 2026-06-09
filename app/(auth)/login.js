@@ -103,7 +103,7 @@ const HalamanLogin = () => {
         </View>
 
         <View style={styles.welcomeContainer}>
-          <Text style={styles.welcomeTitle}>Selamat Datang!</Text>
+          <Text style={styles.welcomeTitle}>Selamat Datinggng!</Text>
           <Text style={styles.welcomeSubtitle}>Silahkan masuk untuk melanjutkan</Text>
         </View>
 
